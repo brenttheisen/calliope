@@ -20,27 +20,30 @@ import com.tuplejump.calliope.Implicits._
 import com.tuplejump.calliope.CasBuilder
 
 val cas = CasBuilder.cql3.withColumnFamily("casDemo", "Words")
-val rdd = sc.cql3Cassandra[Map[String, String], Map[String, String](cas)
+val rdd = sc.cql3Cassandra[Map[String, String], Map[String, String]](cas)
 
 ```
 
 or since we don't need to customize any of the advanced Cassandra connection options, you can use the simplified API,
 
 ```scala
-val rdd = sc.cql3Cassandra[Map[String, String], Map[String, String]("Words", "casDemo")
+val rdd = sc.cql3Cassandra[Map[String, String], Map[String, String]]("Words", "casDemo")
 ```
 
 or when Cassandra is not on the same host as the SparkContext,
 
 ```scala
-val rdd = sc.cql3Cassandra[Map[String, String], Map[String, String]("casserver.local", "9160", Words", "casDemo")
+val rdd = sc.cql3Cassandra[Map[String, String], Map[String, String]]
+							("casserver.local", "9160", Words", "casDemo")
 ```
 
 And now you have a RDD! Further you can also use a where predicate in line with the CQL3 where predicates, i.e. should atleast have 1 EqualTo condition and can be only on columns with secodary indexes.
 
 ```scala
-val cas = CasBuilder.cql3.withColumnFamily("casDemo", "Words").where("book = 'The Three Musketeers'")
-val rdd = sc.cql3Cassandra[Map[String, String], Map[String, String](cas)
+val cas = CasBuilder.cql3.withColumnFamily("casDemo", "Words")
+								.where("book = 'The Three Musketeers'")
+
+val rdd = sc.cql3Cassandra[Map[String, String], Map[String, String]](cas)
 ```
 This will use the Cassandra secondary index to filter out the data and will give you faster results...
 
@@ -53,7 +56,9 @@ import com.tuplejump.calliope.utils.RichByteBuffer._
 import com.tuplejump.calliope.Implicits._
 import com.tuplejump.calliope.CasBuilder
 
-val cas = CasBuilder.cql3.withColumnFamily("casDemo", "Words").("UPDATE casDemo.words set book_name = ?, book_content = ?")
+val cas = CasBuilder.cql3.withColumnFamily("casDemo", "Words")
+			.saveWithQuery("UPDATE casDemo.words set book_name = ?, book_content = ?")
+
 rdd.cql3SaveToCassandra(cas)
 ```
 
@@ -72,20 +77,21 @@ import com.tuplejump.calliope.Implicits._
 import com.tuplejump.calliope.CasBuilder
 
 val cas = CasBuilder.thrift.withColumnFamily("casDemo", "Words")
-val rdd = sc.thriftCassandra[String, Map[String, String](cas)
+val rdd = sc.thriftCassandra[String, Map[String, String]](cas)
 
 ```
 
 or since we don't need to customize any of the advanced Cassandra connection options, you can use the simplified API,
 
 ```scala
-val rdd = sc.thriftCassandra[String, Map[String, String]("Words", "casDemo")
+val rdd = sc.thriftCassandra[String, Map[String, String]]("Words", "casDemo")
 ```
 
 or when Cassandra is not on the same host as the SparkContext,
 
 ```scala
-val rdd = sc.thriftCassandra[String, Map[String, String]("casserver.local", "9160", Words", "casDemo")
+val rdd = sc.thriftCassandra[String, Map[String, String]]
+								("casserver.local", "9160", Words", "casDemo")
 ```
 
 And now you have a RDD[String, Map[String, String]]!

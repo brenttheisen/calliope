@@ -9,7 +9,11 @@ No, this is not a hoax! Spark with Cassandra is really 'magical'. You can try it
 
 Calliope is a library providing an interface to consume data from Cassandra to spark and store RDDs from Spark to Cassandra.
 
-In Greek mythology, Calliope (/kəˈlaɪ.əpiː/ kə-ly-ə-pee; Ancient Greek: Καλλιόπη Kalliopē "beautiful-voiced") was the muse of epic poetry,daughter of Zeus and Mnemosyne, and is believed to be Homer's muse, the inspiration for the Odyssey and the Iliad.
+> From Wikipedia,
+>
+> In Greek mythology, Calliope (/kəˈlaɪ.əpiː/ kə-ly-ə-pee; Ancient Greek: Καλλιόπη Kalliopē "beautiful-voiced") was the muse of epic poetry,daughter of Zeus and Mnemosyne, and is believed to be Homer's muse, the inspiration for the Odyssey and the Iliad.
+
+We hope Calliope will also be the muse of your epic data poetry! 
 
 ## Why Cassandra + Spark?
 Cassandra + Spark is the match made in heaven! Spark with it's in memory mapreduce allows us to process data upto 10x faster than Hadoop MapReduce, opening doors to iterative map reduce, complex process chains in a plain and simple start and so much more. Spark did away with the complex setup and configuration required by Hadoop M/R in it's early days. Overall, it make big data crunching fun!
