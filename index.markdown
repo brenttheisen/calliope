@@ -1,11 +1,10 @@
 ---
 layout: default
-title: Calliope, by tuplejump
+title: "Calliope, by tuplejump"
+published: true
 ---
 
-# Are you selling snake oil?
-
-No, this is not a hoax! Spark with Cassandra is really 'magical'. You can try it yourself and see why this makes a potent combination. You can use Spark on Cassandra without Calliope, all Calliope does is the magic trick a bit easier!
+Spark with Cassandra is really 'magical'. You can try it yourself and see why this makes a potent combination. You can use Spark on Cassandra without Calliope, all Calliope does is the magic trick a bit easier!
 
 Calliope is a library providing an interface to consume data from Cassandra to spark and store RDDs from Spark to Cassandra.
 
@@ -27,5 +26,3 @@ Cassandra storage bckend with Spark will open many new avenues.
 ## Why Calliope?
 Spark supports any Hadoop Input/Output provider and we know there is a Hadoop I/O for Cassandra, so I can simply use it! 
 Yes, sure you can, and for now Calliope uses the same. But contrary to the Hadoop I/O API which was designed for java and Hadoop way of doing things, Calliope provides a improved cleaner API to create and persist RDDs, without exposing you to the internals. In furutre we would like to move away from Hadoop I/O here and build our own fat-free alternative. But, don't worry, we won't change the API for that.
-
-
