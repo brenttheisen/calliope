@@ -1,7 +1,6 @@
 ---
 layout: default
 title: "Calliope, by tuplejump"
-published: true
 ---
 
 Spark with Cassandra is really 'magical'. You can try it yourself and see why this makes a potent combination. You can use Spark on Cassandra without Calliope, all Calliope does is the magic trick a bit easier!
