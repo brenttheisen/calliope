@@ -1,6 +1,6 @@
-package com.imaginea.File;
+package com.tuplejump.File;
 
-import com.imaginea.cassandra.triggers.ITrigger;
+import com.tuplejump.calliope.streaming.ITrigger;
 import org.apache.cassandra.db.ColumnFamily;
 
 import java.io.*;
@@ -21,16 +21,6 @@ public class FilePublisher implements ITrigger, Closeable {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
-    }
-
-    public FilePublisher(){
-//        Thread drainOnShutdown = new Thread(new WrappedRunnable() {
-//            @Override
-//            protected void runMayThrow() throws Exception {
-//                close();
-//            }
-//        }, "FilePublisherShutdownHook");
-//        Runtime.getRuntime().addShutdownHook(drainOnShutdown);
     }
 
     public void process(ColumnFamily cf, String keyspace) {

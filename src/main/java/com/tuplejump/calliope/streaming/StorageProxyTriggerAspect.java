@@ -1,13 +1,14 @@
-package com.imaginea.cassandra.triggers;
+package com.tuplejump.calliope.streaming;
 
-import org.apache.cassandra.db.IMutation;
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.util.List;
+import org.apache.cassandra.db.IMutation;
 
 
 /**

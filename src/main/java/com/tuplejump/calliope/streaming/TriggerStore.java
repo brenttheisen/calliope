@@ -1,4 +1,4 @@
-package com.imaginea.cassandra.triggers;
+package com.tuplejump.calliope.streaming;
 
 
 import com.datastax.driver.core.Cluster;
@@ -79,8 +79,12 @@ public class TriggerStore implements Closeable {
     }
 
     public void connect(String node) {
-        cluster = Cluster.builder().addContactPoint(node).build();
-        session = cluster.connect(keySpace);
+        try {
+            cluster = Cluster.builder().addContactPoint(node).build();
+            session = cluster.connect(keySpace);
+        } catch (Exception e) {
+            logger.info("failed to connect to cassandra  : possible reasons " + e.getMessage());
+        }
     }
 
     public void close() {

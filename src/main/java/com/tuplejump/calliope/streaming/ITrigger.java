@@ -1,4 +1,4 @@
-package com.imaginea.cassandra.triggers;
+package com.tuplejump.calliope.streaming;
 
 
 import org.apache.cassandra.db.ColumnFamily;

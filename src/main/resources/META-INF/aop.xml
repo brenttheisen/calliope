@@ -2,7 +2,7 @@
 <aspectj>
 	<aspects>
 		<aspect
-			name="com.imaginea.cassandra.triggers.StorageProxyTriggerAspect" />
+			name="com.tuplejump.calliope.streaming.StorageProxyTriggerAspect" />
 	</aspects>
 
 	<weaver options="-showWeaveInfo -verbose">

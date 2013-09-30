@@ -1,7 +1,7 @@
-package com.imaginea.zmq;
+package com.tuplejump.zmq;
 
 
-import com.imaginea.cassandra.triggers.ITrigger;
+import com.tuplejump.calliope.streaming.ITrigger;
 import org.apache.cassandra.db.ColumnFamily;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,15 +27,6 @@ public class ZMQPublisher implements Closeable, ITrigger {
         context = ZMQ.context(1);
         pub = context.socket(ZMQ.PUB);
         pub.bind("tcp://*:5555");
-        // pub.bind("ipc://cassandra");
-
-//        Thread drainOnShutdown = new Thread(new WrappedRunnable() {
-//            @Override
-//            protected void runMayThrow() throws Exception {
-//                close();
-//            }
-//        }, "ZMQPublisherShutdownHook");
-//        Runtime.getRuntime().addShutdownHook(drainOnShutdown);
     }
 
     public void close() throws IOException {
