@@ -56,7 +56,6 @@ public class ZMQPublisher implements Closeable, ITrigger {
         logger.debug("publishing to ZMQ");
         String message = "update for keyspace " + keyspace;
         pub.send(message.getBytes(), 0);
-        message = "Column Family update " + cf.toString();
-        pub.send(message.getBytes(), 0);
+        pub.send(cf.toString().getBytes(), 0);
     }
 }
