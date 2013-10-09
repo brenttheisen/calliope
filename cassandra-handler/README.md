@@ -1,4 +1,6 @@
-### This document describes how to use cassandra-handler
+# hive-cassandra-handler
+
+## Check out and Installation
 
 check out the project from *https://github.com/milliondreams/hive.git*.
 
@@ -17,6 +19,8 @@ This generates a **hive-cassandra-x.x.x.jar** file in target folder and all othe
 Copy the **target/hive-cassandra-x.x.x.jar** to the hive lib directory
 
 Copy **target/dependency/cassandra-all-x.x.x.jar** and **target/dependency/cassandra-thrift-x.x.x.jar** to hive lib directory.
+
+## Running
 
 Start hive
 
@@ -56,6 +60,10 @@ The values from tweets table are appended to messages table.
 Retrieving values from a CQL3 table using hive:
 
     hive> select * from messages;
+
+  *Note: If local mode execution is not enabled, hive compiler generates **map-reduce jobs** for most queries. These jobs are then submitted to the Map-Reduce cluster.*
+  *The map-reduce jobs need hive-cassandra-handler, cassandra-all and cassandra-thrift jars.*
+  *Point the **HIVE_AUX_JARS_PATH** environment variable to the location containing these jars to run those jobs successfully.*
 
 While CqlStorageHandler is used to create/access cql3 tables in cassandra, CassandraStorageHandler can be used to create/access
 thrift tables in cassandra.
