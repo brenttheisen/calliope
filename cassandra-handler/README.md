@@ -1,5 +1,7 @@
 # hive-cassandra-handler
 
+This handler provides hive support for cassandra.
+
 ## Check out and Installation
 
 check out the project from *https://github.com/milliondreams/hive.git*.
@@ -10,7 +12,7 @@ Go to branch *cas-support-cql*
 
     > git checkout cas-support-cql
 
-Now run the maven package
+Go to cassandra-handler folder run the maven package command.
 
     > mvn package
 
@@ -37,6 +39,10 @@ To create a cql3 table in cassandra from hive, execute the following command
         "compaction" = "{'class' : 'LeveledCompactionStrategy'}", "replicate_on_write" = "false", "caching" = "all")
 
    where 'test' is the keyspace in cassandra. The above query also creates a column family in cassandra if does not exist.
+
+   *Note: By default hive tries to use cassandra running on localhost at port 9160.*
+   *To change these specify **cassandra.host** and **cassandra.port** in the SerDeProperties while creating a table.*
+   *Hive connects to the specified cassandra instance for further queries to the table.*
 
 To create a keyspace that does not exist in cassandra execute the following query
 
