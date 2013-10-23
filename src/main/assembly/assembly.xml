@@ -51,10 +51,8 @@
             <scope>runtime</scope>
             <includes>
                 <include>org.aspectj:aspectjweaver</include>
-                <include>org.zeromq:zeromq-scala-binding_2.10</include>
-                <include>com.sun.jna:jna</include>
+                <include>org.zeromq:jzmq</include>
                 <include>com.datastax.cassandra:cassandra-driver-core</include>
-                <include>com.github.jnr:jnr-constants</include>
                 <include>com.tuplejump.calliope:castrigger</include>
             </includes>
         </dependencySet>

@@ -38,25 +38,27 @@ import java.util.*;
  */
 public class TriggerStore implements Closeable {
 
-    public static TriggerStore instance = new TriggerStore();
+    public static final TriggerStore instance = new TriggerStore();
     private static Logger logger = LoggerFactory.getLogger(TriggerStore.class);
     private Cluster cluster;
     private Session session;
     private String keySpace;
     private String columnFamily;
     private String clusterNode;
+    private int port;
     private Map<String, List<ITrigger>> triggersMap = new HashMap<String, List<ITrigger>>();
 
     public TriggerStore() {
         Properties prop = new Properties();
         try {
-            prop.load(TriggerStore.class.getClassLoader().getResourceAsStream("config.properties"));
-            this.keySpace = prop.getProperty("Trigger.keyspace");
-            this.columnFamily = prop.getProperty("Trigger.columnFamily");
-            this.clusterNode = prop.getProperty("clusterNode");
+            prop.load(TriggerStore.class.getClassLoader().getResourceAsStream("calliope-config.properties"));
+            this.keySpace = prop.getProperty("trigger.keyspace");
+            this.columnFamily = prop.getProperty("trigger.cf");
+            this.clusterNode = prop.getProperty("cluster.node");
+            this.port = Integer.parseInt(prop.getProperty("cluster.port"));
 
         } catch (IOException e) {
-            throw new RuntimeException("Failed to load properties file config.properties");
+            throw new RuntimeException("Failed to load properties file calliope-config.properties");
         }
 
     }
@@ -70,7 +72,6 @@ public class TriggerStore implements Closeable {
         //initiate CQ3 client connection and reads triggers key space.
         connect(clusterNode);
 
-        List<ITrigger> list;
         ResultSet results = session.execute("SELECT * FROM " + columnFamily);
 
         for (Row row : results) {
@@ -83,6 +84,8 @@ public class TriggerStore implements Closeable {
                 @SuppressWarnings("unchecked")
                 Class<ITrigger> clazz = (Class<ITrigger>) Class.forName(_clazz);
                 ITrigger trigger = clazz.newInstance();
+                logger.info("Adding trigger: [key = " + key + "],[class = " + trigger.getClass().getCanonicalName() + "]");
+                List<ITrigger> list;
                 if (!triggersMap.containsKey(key)) {
                     list = new ArrayList<ITrigger>();
                     triggersMap.put(key, list);
@@ -91,17 +94,19 @@ public class TriggerStore implements Closeable {
                 list.add(trigger);
 
             } catch (Exception e) {
-                logger.info("failed to load class " + _clazz + " : possible reasons " + e.getMessage());
+                logger.error("Failed to load class " + _clazz, e);
+                throw new RuntimeException(e);
             }
         }
     }
 
     public void connect(String node) {
         try {
-            cluster = Cluster.builder().addContactPoint(node).build();
+            cluster = Cluster.builder().addContactPoint(node).withPort(port).build();
             session = cluster.connect(keySpace);
         } catch (Exception e) {
-            logger.info("failed to connect to cassandra  : possible reasons " + e.getMessage());
+            logger.error("Failed to connect to cassandra ", e);
+            throw new RuntimeException(e);
         }
     }
 

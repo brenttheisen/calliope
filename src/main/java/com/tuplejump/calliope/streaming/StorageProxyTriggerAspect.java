@@ -18,15 +18,14 @@
 
 package com.tuplejump.calliope.streaming;
 
-import java.util.List;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.cassandra.db.IMutation;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import org.apache.cassandra.db.IMutation;
+import java.util.List;
 
 
 /**
@@ -44,12 +43,16 @@ public class StorageProxyTriggerAspect {
             "|| execution(* org.apache.cassandra.service.StorageProxy.mutate(..))")
     public void processMutations(ProceedingJoinPoint thisJoinPoint) throws Throwable {
 
-        logger.info("ASPECT HANDLER CALLED");
+        logger.info("Aspect Handler is invoked");
 
         @SuppressWarnings("unchecked")
         List<IMutation> mutations = (List<IMutation>) thisJoinPoint.getArgs()[0];
-        thisJoinPoint.proceed(thisJoinPoint.getArgs());
+        thisJoinPoint.proceed();
+        try{
         TriggerExecutor.instance.execute(mutations);
+        }catch (RuntimeException e){
+            logger.error("failed to process mutation ",e);
+        }
 
     }
 

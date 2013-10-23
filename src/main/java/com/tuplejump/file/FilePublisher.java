@@ -16,12 +16,16 @@
  * limitations under the License.
  */
 
-package com.tuplejump.File;
+package com.tuplejump.file;
 
+import com.tuplejump.calliope.streaming.CasMutation;
 import com.tuplejump.calliope.streaming.ITrigger;
 import org.apache.cassandra.db.ColumnFamily;
 
-import java.io.*;
+import java.io.Closeable;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.PrintWriter;
 
 /**
  * User: suresh
@@ -33,7 +37,7 @@ public class FilePublisher implements ITrigger, Closeable {
 
     private static PrintWriter pw;
 
-    static{
+    static {
         try {
             pw = new PrintWriter("out.txt");
         } catch (FileNotFoundException e) {
@@ -41,9 +45,9 @@ public class FilePublisher implements ITrigger, Closeable {
         }
     }
 
-    public void process(ColumnFamily cf, String keyspace) {
-        pw.write("update for keyspace "+keyspace);
-        pw.write("Column Family update "+cf.toString());
+    public void process(CasMutation mutation) {
+        pw.write("update for column family:" +  "\r\n");
+        pw.write(mutation.toString()+ "\r\n");
         pw.flush();
     }
 

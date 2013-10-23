@@ -45,31 +45,19 @@
         <dependency>
             <groupId>org.apache.cassandra</groupId>
             <artifactId>cassandra-all</artifactId>
-            <version>1.2.8</version>
+            <version>1.2.10</version>
         </dependency>
 
         <dependency>
             <groupId>org.zeromq</groupId>
-            <artifactId>zeromq-scala-binding_2.10</artifactId>
-            <version>0.0.7</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.sun.jna</groupId>
-            <artifactId>jna</artifactId>
-            <version>3.0.9</version>
+            <artifactId>jzmq</artifactId>
+            <version>2.2.2</version>
         </dependency>
 
         <dependency>
             <groupId>com.datastax.cassandra</groupId>
             <artifactId>cassandra-driver-core</artifactId>
-            <version>1.0.2</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.github.jnr</groupId>
-            <artifactId>jnr-constants</artifactId>
-            <version>0.8.4</version>
+            <version>1.0.4</version>
         </dependency>
 
     </dependencies>
@@ -84,8 +72,8 @@
                 <artifactId>aspectj-maven-plugin</artifactId>
                 <version>1.4</version>
                 <configuration>
-                    <source>1.7</source>
-                    <target>1.7</target>
+                    <source>1.6</source>
+                    <target>1.6</target>
                 </configuration>
                 <executions>
                     <execution>
@@ -112,8 +100,10 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.1</version>
                 <configuration>
-                    <source>1.7</source>
-                    <target>1.7</target>
+                    <source>1.6</source>
+                    <target>1.6</target>
+                    <debug>true</debug>
+                    <debuglevel>lines,vars,source</debuglevel>
                 </configuration>
             </plugin>
 

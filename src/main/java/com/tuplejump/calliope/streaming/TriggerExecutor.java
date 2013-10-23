@@ -60,9 +60,11 @@ public class TriggerExecutor {
 
             for (IMutation mutation : mutations) {
                 if (mutation instanceof RowMutation) {
-                    logger.info("Processing row mutation from trigger execution " + mutation.toString(false));
+                    logger.debug("Processing row mutation from trigger execution " + mutation.toString(false));
                     for (ColumnFamily cf : ((RowMutation) mutation).getColumnFamilies()) {
-                        execute(mutation.getTable(), cf);
+                        logger.debug("processing mutation for cf " + cf.toString());
+                        CasMutation casM = prepareCasMutation(mutation.getTable(), cf);
+                        execute(casM);
                     }
                 }
             }
@@ -70,18 +72,24 @@ public class TriggerExecutor {
         }
     }
 
-    private void execute(String keyspace, ColumnFamily cf) {
+    private CasMutation prepareCasMutation(String keyspace, ColumnFamily cf) {
+        return new CasMutation(keyspace, cf);
+    }
+
+    private void execute(CasMutation casM) {
         try {
-            logger.info("cf to string.......  " + cf.toString());
-            List<ITrigger> triggers = TriggerStore.instance.getTriggersForCF(keyspace, cf.metadata().cfName);
+
+            List<ITrigger> triggers = TriggerStore.instance.getTriggersForCF(casM.getKeySpace(), casM.getCfName());
             if (triggers != null) {
                 for (ITrigger trigger : triggers) {
-                    logger.info("calling Trigger "+trigger.getClass().getName()+" for keyspace "+ keyspace+ " for column family "+cf.metadata().cfName);
-                    trigger.process(cf, keyspace);
+                    logger.info("calling Trigger " + trigger.getClass().getName() + " for " + casM.getKeySpace() + ":" + casM.getCfName());
+                    trigger.process(casM);
                 }
+            } else {
+                logger.info("No triggers are called for " + casM.getKeySpace() + ":" + casM.getCfName());
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Error while executing the trigger for " + casM.getKeySpace() + ":" + casM.getCfName(), e);
         }
     }
 }
