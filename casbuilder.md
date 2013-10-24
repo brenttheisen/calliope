@@ -23,12 +23,12 @@ val thriftBuilder = CasBuilder.thrift
 CasBuilder forces you to provide the two compulsory configuration settings, namely keyspace and columnfamily.
 
 ```scala
-CasBuilder.cql3.withColumnFamile(keyspace, columnFamily)
+CasBuilder.cql3.withColumnFamily(keyspace, columnFamily)
 ```
 or
 
 ```scala
-CasBuilder.thrift.withColumnFamile(keyspace, columnFamily)
+CasBuilder.thrift.withColumnFamily(keyspace, columnFamily)
 ```
 
 ## And the rest
