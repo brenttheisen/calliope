@@ -1,4 +1,8 @@
-### This document describes how to use cassandra-handler
+# hive-cassandra-handler
+
+This handler provides hive support for cassandra.
+
+## Check out and Installation
 
 check out the project from *https://github.com/milliondreams/hive.git*.
 
@@ -8,7 +12,7 @@ Go to branch *cas-support-cql*
 
     > git checkout cas-support-cql
 
-Now run the maven package
+Go to cassandra-handler folder run the maven package command.
 
     > mvn package
 
@@ -17,6 +21,8 @@ This generates a **hive-cassandra-x.x.x.jar** file in target folder and all othe
 Copy the **target/hive-cassandra-x.x.x.jar** to the hive lib directory
 
 Copy **target/dependency/cassandra-all-x.x.x.jar** and **target/dependency/cassandra-thrift-x.x.x.jar** to hive lib directory.
+
+## Running
 
 Start hive
 
@@ -33,6 +39,10 @@ To create a cql3 table in cassandra from hive, execute the following command
         "compaction" = "{'class' : 'LeveledCompactionStrategy'}", "replicate_on_write" = "false", "caching" = "all")
 
    where 'test' is the keyspace in cassandra. The above query also creates a column family in cassandra if does not exist.
+
+   *Note: By default hive tries to use cassandra running on localhost at port 9160.*
+   *To change these specify **cassandra.host** and **cassandra.port** in the SerDeProperties while creating a table.*
+   *Hive connects to the specified cassandra instance for further queries to the table.*
 
 To create a keyspace that does not exist in cassandra execute the following query
 
@@ -56,6 +66,10 @@ The values from tweets table are appended to messages table.
 Retrieving values from a CQL3 table using hive:
 
     hive> select * from messages;
+
+  *Note: If local mode execution is not enabled, hive compiler generates **map-reduce jobs** for most queries. These jobs are then submitted to the Map-Reduce cluster.*
+  *The map-reduce jobs need hive-cassandra-handler, cassandra-all and cassandra-thrift jars.*
+  *Point the **HIVE_AUX_JARS_PATH** environment variable to the location containing these jars to run those jobs successfully.*
 
 While CqlStorageHandler is used to create/access cql3 tables in cassandra, CassandraStorageHandler can be used to create/access
 thrift tables in cassandra.
