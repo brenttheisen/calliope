@@ -78,7 +78,7 @@ public class TriggerExecutor {
 
     private void execute(CasMutation casM) {
 
-        //If it is update to trigger column family reload triggers
+        //If it is an update to trigger column family, reload triggers
         if(casM.getKeySpace().equals(TriggerStore.instance.getTriggerKeySpace())
                 && casM.getCfName().equals(TriggerStore.instance.getTriggerColumnFamily())){
             TriggerStore.instance.loadTriggers();
