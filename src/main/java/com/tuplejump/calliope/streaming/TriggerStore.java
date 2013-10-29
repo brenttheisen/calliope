@@ -63,6 +63,14 @@ public class TriggerStore implements Closeable {
 
     }
 
+    public String getTriggerKeySpace(){
+        return keySpace;
+    }
+
+    public String getTriggerColumnFamily(){
+        return columnFamily;
+    }
+
     public List<ITrigger> getTriggersForCF(String ks, String cf) {
         return triggersMap.get(ks + ":" + cf);
     }
