@@ -1,0 +1,14 @@
+build
+build-eclipse
+.arc_jira_lib
+.classpath*
+.externalToolBuilders
+.project
+.settings
+*.launch
+*~
+.idea
+.idea_modules
+*.iml
+target
+metastore_db
