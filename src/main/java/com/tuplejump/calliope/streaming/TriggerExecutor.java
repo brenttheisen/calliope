@@ -29,11 +29,8 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-
 /**
- * User: suresh
- * Date: 22/8/13
- * Time: 1:41 PM
+ * Trigger executor
  */
 public class TriggerExecutor {
     public static final TriggerExecutor instance = new TriggerExecutor();

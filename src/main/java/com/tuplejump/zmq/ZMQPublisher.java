@@ -38,11 +38,8 @@ import java.util.List;
 
 
 /**
- * User: suresh
- * Date: 16/8/13
- * Time: 10:14 AM
+ * ZMQ publisher, publish stream to 127.0.0.1:1237
  */
-
 public class ZMQPublisher implements Closeable, ITrigger {
 
     private static Logger logger = LoggerFactory.getLogger(ZMQPublisher.class);

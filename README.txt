@@ -16,4 +16,4 @@ There is a sample triggers_example script provided in the bin directory. Modify 
 
 Make sure cassandra is running before running this script
 
-$CASSANDRA_HOME/bin/cqlsh < triggers_example.cql
+$CASSANDRA_HOME/bin/cqlsh -f triggers_example.cql

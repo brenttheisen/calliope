@@ -3,6 +3,9 @@ package com.tuplejump.calliope.streaming;
 
 import java.io.Serializable;
 
+/**
+ * Return name and value as byte array for a given column
+ */
 public class ColumnData implements Serializable {
 
     private final byte[] cName;
@@ -13,10 +16,18 @@ public class ColumnData implements Serializable {
         this.value = value;
     }
 
+    /**
+     *
+     * @return column value
+     */
     public byte[] getValue() {
         return value;
     }
 
+    /**
+     *
+     * @return column name
+     */
     public byte[] getcName() {
         return cName;
     }

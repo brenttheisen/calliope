@@ -8,6 +8,9 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * encapsulates Keyspace, coulfamily name and column data for streaming
+ */
 public class CasMutation implements Serializable {
 
 
@@ -28,14 +31,26 @@ public class CasMutation implements Serializable {
         this.coulmndataString = columnFamily.toString();
     }
 
+    /**
+     *
+     * @return list of columndata objects
+     */
     public List<ColumnData> getColumnData() {
         return columnData;
     }
 
+    /**
+     *
+     * @return column family name
+     */
     public String getCfName() {
         return cf;
     }
 
+    /**
+     *
+     * @return keyspace
+     */
     public String getKeySpace() {
         return ks;
     }

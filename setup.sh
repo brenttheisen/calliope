@@ -11,7 +11,7 @@ $CASSANDRA_HOME/bin/cassandra -p pid.txt
 sleep 10
 
 #create tables
-$CASSANDRA_HOME/bin/cqlsh < init.cql
+$CASSANDRA_HOME/bin/cqlsh -f init.cql
 
 sleep 10
 

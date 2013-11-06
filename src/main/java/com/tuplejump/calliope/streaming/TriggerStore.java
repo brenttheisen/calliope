@@ -32,9 +32,7 @@ import java.util.*;
 
 
 /**
- * User: suresh
- * Date: 22/8/13
- * Time: 2:46 PM
+ * Trigger store
  */
 public class TriggerStore implements Closeable {
 

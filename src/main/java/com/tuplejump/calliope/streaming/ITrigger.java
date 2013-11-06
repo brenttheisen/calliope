@@ -20,9 +20,7 @@ package com.tuplejump.calliope.streaming;
 
 
 /**
- * User: suresh
- * Date: 22/8/13
- * Time: 5:36 PM
+ * Interface to be implemented to process mutation
  */
 public interface ITrigger {
     void process(CasMutation mutation);

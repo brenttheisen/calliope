@@ -27,13 +27,9 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
-
 /**
- * User: Suresh
- * Date: 13/8/13
- * Time: 11:04 AM
+ * Entry point for mutation updates
  */
-
 @Aspect
 public class StorageProxyTriggerAspect {
 

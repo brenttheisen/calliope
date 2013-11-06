@@ -43,6 +43,13 @@
                 <include>README.txt</include>
             </includes>
         </fileSet>
+        <fileSet>
+            <directory>${project.build.directory}/apidocs</directory>
+            <outputDirectory>/doc</outputDirectory>
+            <includes>
+                <include>**/*</include>
+            </includes>
+        </fileSet>
     </fileSets>
     <dependencySets>
         <dependencySet>

@@ -28,9 +28,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 /**
- * User: suresh
- * Date: 23/8/13
- * Time: 1:40 PM
+ * File publisher. writes stream to out.txt in the current execution directory
  */
 public class FilePublisher implements ITrigger, Closeable {
 
