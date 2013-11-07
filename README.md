@@ -23,7 +23,7 @@ From project root directory, Execute **mvn assembly:assembly** to compile and pa
 Extract the supplied archive file of castriggers. Run the following scripts located in bin directory to install and setup triggers.
 
 + `export CASSANDRA_HOME=<<PATH to cassandra home>>`
-+`cd bin`
++ `cd bin`
 + `./install.sh`
 + `./setup.sh`
 
