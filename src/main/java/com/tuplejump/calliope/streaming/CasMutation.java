@@ -31,26 +31,14 @@ public class CasMutation implements Serializable {
         this.coulmndataString = columnFamily.toString();
     }
 
-    /**
-     *
-     * @return list of columndata objects
-     */
     public List<ColumnData> getColumnData() {
         return columnData;
     }
 
-    /**
-     *
-     * @return column family name
-     */
     public String getCfName() {
         return cf;
     }
 
-    /**
-     *
-     * @return keyspace
-     */
     public String getKeySpace() {
         return ks;
     }

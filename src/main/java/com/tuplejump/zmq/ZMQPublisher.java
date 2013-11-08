@@ -20,10 +20,7 @@ package com.tuplejump.zmq;
 
 
 import com.tuplejump.calliope.streaming.CasMutation;
-import com.tuplejump.calliope.streaming.ColumnData;
 import com.tuplejump.calliope.streaming.ITrigger;
-import org.apache.cassandra.db.ColumnFamily;
-import org.apache.cassandra.db.IColumn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zeromq.ZContext;
@@ -33,8 +30,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
-import java.util.ArrayList;
-import java.util.List;
 
 
 /**
