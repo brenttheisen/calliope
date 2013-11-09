@@ -18,7 +18,7 @@ pom.xml file is included with above said dependencies There is a maven assembly 
 
 From project root directory, Execute **mvn assembly:assembly** to compile and package generated jar and it’s dependencies as zip, tar.gz
 
-##Instructions for installation castriggers
+##Installation of castriggers
 
 Extract the supplied archive file of castriggers. Run the following scripts located in bin directory to install and setup triggers.
 
@@ -43,6 +43,8 @@ Add aspect weaver as javaagent to $CASSANDRA_HOME/conf/cassandra-env.sh file
 
 Set up trigger database for the first time
 
+Copy configuration file “calliope-config.properties” to $CASSANDRA_HOME
+
 
 ##Setup Trigger for a columnFamily
 
@@ -50,6 +52,17 @@ There is a sample triggers_example script provided in the bin directory. Modify 
 Make sure cassandra is running before running this script
 
 `$CASSANDRA_HOME/bin/cqlsh -f triggers_example.cql`
+
+##Configuration of Trigger store and  supplied  triggers
+
+The package is supplied with two trigger classes. You could change the configuration of those triggers.
++ Edit $CASSANDRA_HOME/calliope-config.properties
++ Restart cassandra
+
+##Subscription to ZMQ Stream
+
+For a given keyspace ks and column family cf, ZMQ topic for subscription is “cassandra.ks.cf”
+
 
 ## API
 
@@ -59,4 +72,17 @@ com.tuplejump.calliope.streaming.CasMutation
 com.tuplejump.calliope.streaming.ColumnData
 
 Check Javadocs on how to use them.  Javadocs are included in doc folder.
+
+## Running example ZMQ subscriber
+
+For the convenience of user, an example is included in the package. Following are the steps to execute it.
+
++ Download spark-0.8.0-incubating
++ Build spark source using simple build tool `sbt/sbt assembly`
++ edit spar-env.sh to include castrigger jar in class path of spark
+  `export SPARK_CLASSPATH=<<Path to castrigger-0.1.jar>>`
++ Run example with following command
+`/run-example com.tuplejump.calliope.streaming.examples.ZeroMQCastriggerWordCount local tcp://127.0.0.1:5555 cassandra.dev.emp`
++ The above example subscribes to mutations of keyspace dev and column family emp. 
+
 
