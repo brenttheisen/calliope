@@ -27,13 +27,17 @@
     </formats>
     <fileSets>
         <fileSet>
-            <directory>${project.basedir}</directory>
-            <outputDirectory>/bin</outputDirectory>
+            <directory>${project.basedir}/bin</directory>
+            <outputDirectory>bin</outputDirectory>
             <includes>
-                <include>install.sh</include>
-                <include>setup.sh</include>
-                <include>init.cql</include>
-                <include>triggers_example.cql</include>
+                <include>**/*</include>
+            </includes>
+        </fileSet>
+        <fileSet>
+            <directory>${project.basedir}/conf</directory>
+            <outputDirectory>conf</outputDirectory>
+            <includes>
+                <include>**/*</include>
             </includes>
         </fileSet>
         <fileSet>

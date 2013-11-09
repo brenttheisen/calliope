@@ -18,38 +18,49 @@
 
 package com.tuplejump.file;
 
+import com.tuplejump.calliope.CalliopeProperties;
 import com.tuplejump.calliope.streaming.CasMutation;
 import com.tuplejump.calliope.streaming.ITrigger;
-import org.apache.cassandra.db.ColumnFamily;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.BufferedWriter;
 import java.io.Closeable;
-import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
-import java.io.PrintWriter;
 
 /**
- * File publisher. writes stream to out.txt in the current execution directory
+ * File publisher. writes stream to a file.
+ * file path is mentioned as file.path in  calliope-config.properties
  */
 public class FilePublisher implements ITrigger, Closeable {
 
+    public static final FilePublisher instance = new FilePublisher();
+    private static Logger logger = LoggerFactory.getLogger(FilePublisher.class);
+    private BufferedWriter bw;
 
-    private static PrintWriter pw;
 
-    static {
+    private FilePublisher() {
         try {
-            pw = new PrintWriter("out.txt");
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            bw = new BufferedWriter(new FileWriter(CalliopeProperties.instance.getFilePath()));
+        } catch (IOException e) {
+            logger.error(e.getMessage());
+            throw new RuntimeException(e);
         }
     }
 
-    public void process(CasMutation mutation) {
-        pw.write("update for column family:" +  "\r\n");
-        pw.write(mutation.toString()+ "\r\n");
-        pw.flush();
+    public synchronized void process(CasMutation mutation) {
+        try {
+            logger.debug("publishing to File");
+            bw.write("update for column family:" + "\r\n");
+            bw.write(mutation.toString() + "\r\n");
+        } catch (IOException e) {
+            logger.error(e.getMessage());
+            throw new RuntimeException(e);
+        }
     }
 
     public void close() throws IOException {
-        pw.close();
+        bw.close();
     }
 }

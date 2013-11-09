@@ -1,3 +1,5 @@
+#!/bin/sh
+
 
 #Check for cassandra home
 if [ -z "$CASSANDRA_HOME" ]; then
@@ -5,11 +7,15 @@ if [ -z "$CASSANDRA_HOME" ]; then
     exit 1
 fi
 
+BASEDIR=$(dirname $0)
+
 #copy jar depenceies
-for f in ../lib/*.jar
+for f in $BASEDIR/../lib/*.jar
 do 
    cp -v $f $CASSANDRA_HOME/lib
 done
+
+cp -v $BASEDIR/../conf/calliope-config.properties $CASSANDRA_HOME/conf/
 
 # append javagent to conf script
 cp $CASSANDRA_HOME/conf/cassandra-env.sh $CASSANDRA_HOME/conf/cassandra-env_backup.sh

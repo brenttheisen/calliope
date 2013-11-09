@@ -19,6 +19,7 @@
 package com.tuplejump.zmq;
 
 
+import com.tuplejump.calliope.CalliopeProperties;
 import com.tuplejump.calliope.streaming.CasMutation;
 import com.tuplejump.calliope.streaming.ITrigger;
 import org.slf4j.Logger;
@@ -33,20 +34,24 @@ import java.io.ObjectOutputStream;
 
 
 /**
- * ZMQ publisher, publish stream to 127.0.0.1:1237
+ * ZMQ publisher, publish stream to tcp://*:{port}
+ * port is mentioned as zmq.port in calliope-config.properties
  */
 public class ZMQPublisher implements Closeable, ITrigger {
 
+
     private static Logger logger = LoggerFactory.getLogger(ZMQPublisher.class);
+    public static final ZMQPublisher instance = new ZMQPublisher();
+
     private ZMQ.Socket pub;
     private ZContext context;
 
-
-    public ZMQPublisher() {
+    private ZMQPublisher() {
         context = new ZContext();
         pub = context.createSocket(ZMQ.PUB);
-        pub.bind("tcp://127.0.0.1:1237");
+        pub.bind("tcp://*:" + CalliopeProperties.instance.getZmqPort());
     }
+
 
     public void close() throws IOException {
         pub.close();
@@ -54,13 +59,11 @@ public class ZMQPublisher implements Closeable, ITrigger {
     }
 
 
-    public void process(CasMutation mutation) {
-
+    public synchronized void process(CasMutation mutation) {
         try {
             logger.debug("publishing to ZMQ");
-
-            pub.send("A".getBytes(), ZMQ.SNDMORE); //SendMore
-
+            String topic = "cassandra." + mutation.getKeySpace() + "." + mutation.getCfName();
+            pub.send(topic.getBytes(), ZMQ.SNDMORE); //SendMore
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             new ObjectOutputStream(baos).writeObject(mutation);
             pub.send(baos.toByteArray(), ZMQ.NOBLOCK); //NOBLOCK

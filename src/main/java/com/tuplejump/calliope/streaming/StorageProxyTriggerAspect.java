@@ -44,10 +44,10 @@ public class StorageProxyTriggerAspect {
         @SuppressWarnings("unchecked")
         List<IMutation> mutations = (List<IMutation>) thisJoinPoint.getArgs()[0];
         thisJoinPoint.proceed();
-        try{
-        TriggerExecutor.instance.execute(mutations);
-        }catch (RuntimeException e){
-            logger.error("failed to process mutation ",e);
+        try {
+            TriggerExecutor.instance.execute(mutations);
+        } catch (RuntimeException e) {
+            logger.error("failed to process mutation ", e);
         }
 
     }

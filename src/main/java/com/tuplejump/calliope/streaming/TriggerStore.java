@@ -23,12 +23,15 @@ import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
+import com.tuplejump.calliope.CalliopeProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
-import java.io.IOException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -40,45 +43,22 @@ public class TriggerStore implements Closeable {
     private static Logger logger = LoggerFactory.getLogger(TriggerStore.class);
     private Cluster cluster;
     private Session session;
-    private String keySpace;
-    private String columnFamily;
-    private String clusterNode;
-    private int port;
-    private Map<String, List<ITrigger>> triggersMap = new HashMap<String, List<ITrigger>>();
+    private Map<String, Set<ITrigger>> triggersMap = new HashMap<String, Set<ITrigger>>();
+    private volatile boolean clusterinit;
 
-    public TriggerStore() {
-        Properties prop = new Properties();
-        try {
-            prop.load(TriggerStore.class.getClassLoader().getResourceAsStream("calliope-config.properties"));
-            this.keySpace = prop.getProperty("trigger.keyspace");
-            this.columnFamily = prop.getProperty("trigger.cf");
-            this.clusterNode = prop.getProperty("cluster.node");
-            this.port = Integer.parseInt(prop.getProperty("cluster.port"));
-
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to load properties file calliope-config.properties");
-        }
-
-    }
-
-    public String getTriggerKeySpace(){
-        return keySpace;
-    }
-
-    public String getTriggerColumnFamily(){
-        return columnFamily;
-    }
-
-    public List<ITrigger> getTriggersForCF(String ks, String cf) {
+    public Set<ITrigger> getTriggersForCF(String ks, String cf) {
         return triggersMap.get(ks + ":" + cf);
     }
 
-    public void loadTriggers() {
+    public synchronized void loadTriggers() {
 
         //initiate CQ3 client connection and reads triggers key space.
-        connect(clusterNode);
+        if (!clusterinit) {
+            connect(CalliopeProperties.instance.getClusterNode(), CalliopeProperties.instance.getClusterPort());
+            clusterinit = true;
+        }
 
-        ResultSet results = session.execute("SELECT * FROM " + columnFamily);
+        ResultSet results = session.execute("SELECT * FROM " + CalliopeProperties.instance.getTriggerStoreCF());
 
         for (Row row : results) {
             String ks = row.getString("ks");
@@ -89,15 +69,15 @@ public class TriggerStore implements Closeable {
             try {
                 @SuppressWarnings("unchecked")
                 Class<ITrigger> clazz = (Class<ITrigger>) Class.forName(_clazz);
-                ITrigger trigger = clazz.newInstance();
+                ITrigger trigger = (ITrigger) clazz.getField("instance").get(clazz);
                 logger.info("Adding trigger: [key = " + key + "],[class = " + trigger.getClass().getCanonicalName() + "]");
-                List<ITrigger> list;
+                Set<ITrigger> set;
                 if (!triggersMap.containsKey(key)) {
-                    list = new ArrayList<ITrigger>();
-                    triggersMap.put(key, list);
+                    set = new HashSet<ITrigger>();
+                    triggersMap.put(key, set);
                 }
-                list = triggersMap.get(key);
-                list.add(trigger);
+                set = triggersMap.get(key);
+                set.add(trigger);
 
             } catch (Exception e) {
                 logger.error("Failed to load class " + _clazz, e);
@@ -106,10 +86,11 @@ public class TriggerStore implements Closeable {
         }
     }
 
-    public void connect(String node) {
+    private void connect(String node, int port) {
         try {
+            logger.info("initiating client connection to cluster");
             cluster = Cluster.builder().addContactPoint(node).withPort(port).build();
-            session = cluster.connect(keySpace);
+            session = cluster.connect(CalliopeProperties.instance.getTriggerStoreKS());
         } catch (Exception e) {
             logger.error("Failed to connect to cassandra ", e);
             throw new RuntimeException(e);

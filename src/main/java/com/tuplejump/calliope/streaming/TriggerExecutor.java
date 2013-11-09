@@ -19,13 +19,16 @@
 package com.tuplejump.calliope.streaming;
 
 
+import com.tuplejump.calliope.CalliopeProperties;
 import org.apache.cassandra.db.ColumnFamily;
 import org.apache.cassandra.db.IMutation;
 import org.apache.cassandra.db.RowMutation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -76,15 +79,17 @@ public class TriggerExecutor {
     private void execute(CasMutation casM) {
 
         //If it is an update to trigger column family, reload triggers
-        if(casM.getKeySpace().equals(TriggerStore.instance.getTriggerKeySpace())
-                && casM.getCfName().equals(TriggerStore.instance.getTriggerColumnFamily())){
+        if (casM.getKeySpace().equals(CalliopeProperties.instance.getTriggerStoreKS())
+                && casM.getCfName().equals(CalliopeProperties.instance.getTriggerStoreCF())) {
             TriggerStore.instance.loadTriggers();
         }
 
         try {
-            List<ITrigger> triggers = TriggerStore.instance.getTriggersForCF(casM.getKeySpace(), casM.getCfName());
+            Set<ITrigger> triggers = TriggerStore.instance.getTriggersForCF(casM.getKeySpace(), casM.getCfName());
             if (triggers != null) {
-                for (ITrigger trigger : triggers) {
+                Iterator<ITrigger> itr = triggers.iterator();
+                while (itr.hasNext()) {
+                    ITrigger trigger = itr.next();
                     logger.info("calling Trigger " + trigger.getClass().getName() + " for " + casM.getKeySpace() + ":" + casM.getCfName());
                     trigger.process(casM);
                 }
