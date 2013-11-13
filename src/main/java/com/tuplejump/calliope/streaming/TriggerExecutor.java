@@ -21,11 +21,13 @@ package com.tuplejump.calliope.streaming;
 
 import com.tuplejump.calliope.CalliopeProperties;
 import org.apache.cassandra.db.ColumnFamily;
+import org.apache.cassandra.db.IColumn;
 import org.apache.cassandra.db.IMutation;
 import org.apache.cassandra.db.RowMutation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -73,7 +75,13 @@ public class TriggerExecutor {
     }
 
     private CasMutation prepareCasMutation(String keyspace, ColumnFamily cf) {
-        return new CasMutation(keyspace, cf);
+
+        List<ColumnData> list = new ArrayList<ColumnData>();
+        for (IColumn columnExternal : cf.getSortedColumns()) {
+            list.add(new ColumnData(columnExternal.name().array(), columnExternal.value().array()));
+        }
+
+        return new CasMutation(keyspace, cf.metadata().cfName, list, cf.toString());
     }
 
     private void execute(CasMutation casM) {
@@ -88,11 +96,12 @@ public class TriggerExecutor {
             Set<ITrigger> triggers = TriggerStore.instance.getTriggersForCF(casM.getKeySpace(), casM.getCfName());
             if (triggers != null) {
                 Iterator<ITrigger> itr = triggers.iterator();
-                while (itr.hasNext()) {
-                    ITrigger trigger = itr.next();
+
+                for (ITrigger trigger : triggers) {
                     logger.info("calling Trigger " + trigger.getClass().getName() + " for " + casM.getKeySpace() + ":" + casM.getCfName());
                     trigger.process(casM);
                 }
+
             } else {
                 logger.info("No triggers are called for " + casM.getKeySpace() + ":" + casM.getCfName());
             }

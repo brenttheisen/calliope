@@ -19,34 +19,46 @@
 package com.tuplejump.calliope.streaming;
 
 
-import org.apache.cassandra.db.ColumnFamily;
-import org.apache.cassandra.db.IColumn;
-
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
- * encapsulates Keyspace, coulfamily name and column data for streaming
+ * encapsulates Keyspace, columnfamily name and column data for streaming
  */
 public class CasMutation implements Serializable {
 
 
-    private final String ks;
-    private final String cf;
-    private final List<ColumnData> columnData;
-    private final String coulmndataString;
+    private String ks;
+    private String cf;
+    private List<ColumnData> columnData;
+    private String columndataString;
 
-    public CasMutation(String ks, ColumnFamily columnFamily) {
+    public CasMutation(String ks, String cf, List<ColumnData> columnData, String coulmndataString) {
         this.ks = ks;
-        this.cf = columnFamily.metadata().cfName;
+        this.cf = cf;
+        this.columnData = columnData;
+        this.columndataString = coulmndataString;
+    }
 
-        List<ColumnData> list = new ArrayList<ColumnData>();
-        for (IColumn columnExternal : columnFamily.getSortedColumns()) {
-            list.add(new ColumnData(columnExternal.name().array(), columnExternal.value().array()));
-        }
-        this.columnData = list;
-        this.coulmndataString = columnFamily.toString();
+    private void writeObject(ObjectOutputStream out) throws IOException {
+        out.defaultWriteObject();
+        out.writeObject(ks);
+        out.writeObject(cf);
+        out.writeObject(columnData);
+        out.writeObject(columndataString);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void readObject(ObjectInputStream in) throws IOException,
+            ClassNotFoundException {
+        in.defaultReadObject();
+        this.ks = (String) in.readObject();
+        this.cf = (String) in.readObject();
+        this.columnData = (List<ColumnData>) in.readObject();
+        this.columndataString = (String) in.readObject();
     }
 
     public List<ColumnData> getColumnData() {
@@ -65,7 +77,7 @@ public class CasMutation implements Serializable {
     public String toString() {
         StringBuilder sb = new StringBuilder("");
         sb.append("keyspace = ").append(ks).append(", ");
-        sb.append(coulmndataString);
+        sb.append(columndataString);
         return sb.toString();
     }
 }
