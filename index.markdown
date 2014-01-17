@@ -4,7 +4,7 @@ title: "Calliope, by tuplejump"
 ---
 
 
-** New release of Calliope v0.8.1-EA built for Spark 0.8.1-incubating **
+**New release of Calliope v0.8.1-EA built for Spark 0.8.1-incubating**
 
 Spark with Cassandra is really 'magical'. You can try it yourself and see why this makes a potent combination. You can use Spark on Cassandra without Calliope, all Calliope does is makes the magic easier!
 
