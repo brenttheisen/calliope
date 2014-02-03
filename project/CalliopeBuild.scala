@@ -4,9 +4,9 @@ import scala.xml.NodeSeq
 
 object CalliopeBuild extends Build {
 
-  val VERSION = "0.8.1-EA"
-  val SCALA_VERSION = "2.9.3"
-  val SPARK_VERSION = "0.8.1-incubating"
+  val VERSION = "0.9.0-EA"
+  val SCALA_VERSION = "2.10.3"
+  val SPARK_VERSION = "0.9.0-incubating"
   val CAS_VERSION = "1.2.12"
   val THRIFT_VERSION = "0.7.0"
 
@@ -43,7 +43,7 @@ object CalliopeBuild extends Build {
 
       scalaVersion := SCALA_VERSION,
 
-      scalacOptions := Seq("-unchecked", "-deprecation"),
+      scalacOptions := Seq("-unchecked", "-deprecation", "-feature"),
 
       dependencies,
 
@@ -72,9 +72,9 @@ object CalliopeBuild extends Build {
 
       licenses := Seq("Apache License, Version 2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
 
-      homepage := Some(url("https://github.com/tuplejump/calliope")),
+      homepage := Some(url("https://tuplejump.github.io/calliope")),
 
-      organizationName := "Tuplejump Software Pvt. Ltd.",
+      organizationName := "Tuplejump, Inc.",
 
       organizationHomepage := Some(url("http://www.tuplejump.com")),
 

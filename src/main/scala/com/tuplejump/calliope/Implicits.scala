@@ -25,6 +25,9 @@ import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import java.nio.ByteBuffer
 
+import scala.language.implicitConversions
+
+
 object Types{
   type CQLRowKeyMap = Map[CQLColumnName, CQLColumnValue]
   type CQLRowMap = Map[CQLColumnName, CQLColumnValue]

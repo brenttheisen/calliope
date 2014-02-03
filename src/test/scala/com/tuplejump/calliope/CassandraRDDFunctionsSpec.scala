@@ -10,6 +10,8 @@ import RichByteBuffer._
 import com.tuplejump.calliope.Implicits._
 import com.tuplejump.calliope.Types._
 
+import scala.language.implicitConversions
+
 
 class CassandraRDDFunctionsSpec extends FunSpec with BeforeAndAfterAll with ShouldMatchers with MustMatchers {
 
