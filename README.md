@@ -10,7 +10,7 @@ For more information visit - http://tuplejump.github.com/calliope
 
 ## Download Binary
 
-You can download the library from [here](http://bit.ly/1dC3kbZ)
+You can download the library from for Spark v0.8.1 [here](http://bit.ly/1dC3kbZ) and for Spark v0.9 [here](http://bit.ly/1j7CpbW).
 
 ## Add to Maven
 
