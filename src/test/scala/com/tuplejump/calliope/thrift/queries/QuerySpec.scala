@@ -26,7 +26,7 @@ class QuerySpec extends FunSpec with ShouldMatchers with MustMatchers {
       //col.isLt
       //col.isLte
 
-      //to rpevent compilation error
+      //to prevent compilation error
       true
     }
 

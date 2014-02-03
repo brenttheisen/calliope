@@ -29,9 +29,10 @@ import org.apache.spark._
 import org.apache.spark.rdd.RDD
 import com.tuplejump.calliope.utils.{SparkHadoopMapReduceUtil, CassandraPartition}
 import com.tuplejump.calliope.Types.{CQLRowMap, CQLRowKeyMap}
+import scala.reflect.ClassTag
 
 
-private[calliope] class Cql3CassandraRDD[T: ClassManifest](sc: SparkContext,
+private[calliope] class Cql3CassandraRDD[T: ClassTag](sc: SparkContext,
                                                            @transient cas: CasBuilder,
                                                            unmarshaller: (CQLRowKeyMap, CQLRowMap) => T)
   extends RDD[T](sc, Nil)
@@ -39,8 +40,8 @@ private[calliope] class Cql3CassandraRDD[T: ClassManifest](sc: SparkContext,
   with Logging {
 
   // A Hadoop Configuration can be about 10 KB, which is pretty big, so broadcast it
-  @transient private val conf = cas.configuration
-  private val confBroadcast = sc.broadcast(new SerializableWritable(conf))
+  @transient private val hadoopConf = cas.configuration
+  private val confBroadcast = sc.broadcast(new SerializableWritable(hadoopConf))
 
   @transient val jobId = new JobID(System.currentTimeMillis().toString, id)
 
@@ -95,7 +96,7 @@ private[calliope] class Cql3CassandraRDD[T: ClassManifest](sc: SparkContext,
 
   def getPartitions: Array[Partition] = {
 
-    val jc = newJobContext(conf, jobId)
+    val jc = newJobContext(hadoopConf, jobId)
     val inputFormat = new CqlPagingInputFormat
     val rawSplits = inputFormat.getSplits(jc).toArray
     val result = new Array[Partition](rawSplits.size)

@@ -36,6 +36,9 @@ import java.nio.ByteBuffer
 import com.tuplejump.calliope.utils.SparkHadoopMapReduceUtil
 import Types._
 
+import scala.language.implicitConversions
+
+
 class CassandraRDDFunctions[U](self: RDD[U])
   extends Logging with SparkHadoopMapReduceUtil with Serializable {
 

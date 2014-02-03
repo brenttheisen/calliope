@@ -10,9 +10,11 @@ For more information visit - http://tuplejump.github.com/calliope
 
 ## Download Binary
 
-You can download the library from [here](http://bit.ly/1dC3kbZ)
+You can download the library from for Spark v0.8.1 [here](http://bit.ly/1dC3kbZ) and for Spark v0.9 [here](http://bit.ly/1j7CpbW).
 
 ## Add to Maven
+
+Working with Spark 0.8.1 and Scala 2.9.x,
 
 ```xml
 <dependency>
@@ -22,11 +24,33 @@ You can download the library from [here](http://bit.ly/1dC3kbZ)
 </dependency>
 ```
 
+
+Working with Spark 0.9.0 and Scala 2.10.x,
+
+```xml
+<dependency>
+  <groupId>com.tuplejump</groupId>
+  <artifactId>calliope_2.10</artifactId>
+  <version>0.9.0-EA</version>
+</dependency>
+```
+
+
 ## Add to SBT
+
+Working with Spark 0.8.1 and Scala 2.9.x,
+
 ```scala
 libraryDependencies += "com.tuplejump" %% "calliope" % "0.8.1-EA"
 ```
 
+
+Working with Spark 0.9.0 and Scala 2.10.x,
+
+```scala
+libraryDependencies += "com.tuplejump" %% "calliope" % "0.9.0-EA"
+```
+
 **Note on Scala version**
-Calliope is built with Scala 2.9.3, the same version as the current release of Spark. In future when Spark moves on to newer Scala version, we will try to keep releasing Calliope with all the versions of Scala for which Spark is available.
+Every version of Calliope is built with the same version as the corresponding release of Spark, i.e. Calliope 0.8.1 is built against Scala 2.9.3 and Calliope 0.9.0 against Scala 2.10.3.
 

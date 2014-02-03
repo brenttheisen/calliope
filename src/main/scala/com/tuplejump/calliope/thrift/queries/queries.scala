@@ -22,6 +22,9 @@ package com.tuplejump.calliope.queries
 import org.apache.cassandra.thrift.{IndexOperator, IndexExpression}
 import java.nio.ByteBuffer
 
+import scala.language.implicitConversions
+
+
 trait ThriftQuery {
   protected[queries] var expressions = List[IndexExpression]()
 }

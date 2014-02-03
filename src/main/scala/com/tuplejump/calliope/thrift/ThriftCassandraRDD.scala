@@ -20,7 +20,6 @@
 package com.tuplejump.calliope.thrift
 
 import org.apache.cassandra.hadoop.ColumnFamilyInputFormat
-import java.nio.ByteBuffer
 import scala.collection.JavaConversions._
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -30,9 +29,10 @@ import org.apache.spark.rdd.RDD
 import com.tuplejump.calliope.utils.{SparkHadoopMapReduceUtil, CassandraPartition}
 import com.tuplejump.calliope.Types.{ThriftRowMap, ThriftRowKey}
 import org.apache.hadoop.mapreduce.{InputSplit, TaskAttemptID, JobID}
+import scala.reflect.ClassTag
 
 
-class ThriftCassandraRDD[T: Manifest](sc: SparkContext,
+class ThriftCassandraRDD[T: ClassTag](sc: SparkContext,
                                       @transient cas: ThriftCasBuilder,
                                       unmarshaller: (ThriftRowKey, ThriftRowMap) => T)
   extends RDD[T](sc, Nil)
@@ -40,8 +40,8 @@ class ThriftCassandraRDD[T: Manifest](sc: SparkContext,
   with Logging {
 
   // A Hadoop Configuration can be about 10 KB, which is pretty big, so broadcast it
-  @transient private val conf = cas.configuration
-  private val confBroadcast = sc.broadcast(new SerializableWritable(conf))
+  @transient private val haadoopConf = cas.configuration
+  private val confBroadcast = sc.broadcast(new SerializableWritable(haadoopConf))
 
   @transient val jobId = new JobID(System.currentTimeMillis().toString, id)
 
@@ -100,7 +100,7 @@ class ThriftCassandraRDD[T: Manifest](sc: SparkContext,
 
   def getPartitions: Array[Partition] = {
 
-    val jc = newJobContext(conf, jobId)
+    val jc = newJobContext(haadoopConf, jobId)
     val inputFormat = new ColumnFamilyInputFormat()
     val rawSplits = inputFormat.getSplits(jc).toArray
     val result = new Array[Partition](rawSplits.size)
