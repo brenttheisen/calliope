@@ -20,13 +20,16 @@
 package com.tuplejump.calliope.examples
 
 
-import org.apache.spark.streaming.{DStream, Seconds, StreamingContext}
+import org.apache.spark.streaming.{Seconds, StreamingContext}
+import org.apache.spark.streaming.dstream.DStream
 import org.apache.spark.streaming.StreamingContext._
 import com.tuplejump.calliope.utils.RichByteBuffer._
 import com.tuplejump.calliope.Implicits._
 import com.tuplejump.calliope.CasBuilder
-import java.nio.ByteBuffer
 import com.tuplejump.calliope.Types.{CQLRowValues, CQLRowKeyMap}
+
+import scala.language.implicitConversions
+
 
 /**
  * A dummy network stream can be run using a unix tool Netcat like this
@@ -57,7 +60,7 @@ object PersistDStream {
     implicit def keyMarshaller(x: (String, Int)): CQLRowKeyMap = Map("word" -> x._1)
     implicit def rowMarshaller(x: (String, Int)): CQLRowValues = List(x._2)
 
-    wordCounts.foreach(_ cql3SaveToCassandra cas)
+    wordCounts.foreachRDD(_.cql3SaveToCassandra(cas))
     ssc.start()
   }
 }
