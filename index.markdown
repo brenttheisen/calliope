@@ -3,9 +3,11 @@ layout: default
 title: "Calliope, by tuplejump"
 ---
 
+## Project Updates 
+* New [Early Accesss release 0.9.0-EA](getting-started.html) working with Scala 2.10 and Spark 0.9.0 is out.
+* Calliope [Release 0.8.1](getting-started.html) working with Scala 2.9.3 adn Spark 0.8.1 is GA
 
-**New release of Calliope v0.8.1-EA built for Spark 0.8.1-incubating**
-
+## Welcome to Calliope
 Spark with Cassandra is really 'magical'. You can try it yourself and see why this makes a potent combination. You can use Spark on Cassandra without Calliope, all Calliope does is makes the magic easier!
 
 Calliope is a library providing an interface to consume data from Cassandra to spark and store Resilient Distributed Datasets (RDD) from Spark to Cassandra.

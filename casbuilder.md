@@ -3,7 +3,7 @@ layout: default
 title: CasBuilder - Calliope
 ---
 # Bricks and Mortar
-Cassandra configuration has a lot of options. not all of which are relevant in all scenarios. CasBuilder provides you with ability to set only the necessary options (keyspace and columnfamily) to start using calliope. You can still change other settings if required.
+Cassandra configuration has a lot of options. not all of which are relevant in all scenarios. CasBuilder provides you with ability to set only the necessary options (keyspace and column family) to start using calliope. You can still change other settings if required.
 
 ## Cql3 or Thrift
 
@@ -20,7 +20,7 @@ val thriftBuilder = CasBuilder.thrift
 
 ## Keyspace and Column Family
 
-CasBuilder forces you to provide the two compulsory configuration settings, namely keyspace and columnfamily.
+CasBuilder forces you to provide the two compulsory configuration settings, namely keyspace and column family.
 
 ```scala
 CasBuilder.cql3.withColumnFamily(keyspace, columnFamily)

@@ -29,7 +29,7 @@ Working with Spark 0.8.1 and Scala 2.9.x,
 <dependency>
   <groupId>com.tuplejump</groupId>
   <artifactId>calliope_2.9.3</artifactId>
-  <version>0.8.1-EA</version>
+  <version>0.8.1</version>
 </dependency>
 ```
 
@@ -50,7 +50,7 @@ Working with Spark 0.9.0 and Scala 2.10.x,
 Working with Spark 0.8.1 and Scala 2.9.x,
 
 ```scala
-libraryDependencies += "com.tuplejump" %% "calliope" % "0.8.1-EA"
+libraryDependencies += "com.tuplejump" %% "calliope" % "0.8.1"
 ```
 
 
