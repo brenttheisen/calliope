@@ -7,8 +7,8 @@ object CalliopeBuild extends Build {
   val VERSION = "0.9.0-EA"
   val SCALA_VERSION = "2.10.3"
   val SPARK_VERSION = "0.9.0-incubating"
-  val CAS_VERSION = "1.2.12"
-  val THRIFT_VERSION = "0.7.0"
+  val CAS_VERSION = "2.0.4"
+  val THRIFT_VERSION = "0.9.1"
 
   lazy val calliope = {
     val dependencies = libraryDependencies ++= Seq(
