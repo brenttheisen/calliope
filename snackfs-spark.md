@@ -9,12 +9,14 @@ SnackFS was written for use with Spark. Hance using it doesn't require any speci
 
 ## How do I add SnackFS dependencies to Spark?
 
-Assuming you have extracted the SnackFS distribution to $SNACKFS_HOME, you need to take the following steps to get started.
+Assuming you have extracted the SnackFS distribution to $SNACKFS\_HOME, you need to take the following steps to get started.
 
-* Copy $SNACKFS_HOME/conf/core-site.xml to $SPARK_HOME/conf
-* When you are using just the Spark Shell, in the $SPARK_HOME/spark-env.sh file, Add the following -
+* Copy $SNACKFS\_HOME/conf/core-site.xml to $SPARK\_HOME/conf
+* When you are using just the Spark Shell, in the $SPARK\_HOME/spark-env.sh file, Add the following -
 
-`export SPARK_CLASSPATH=$SNACKFS_HOME/snack_spark/*`
+```
+export SPARK_CLASSPATH=$SNACKFS_HOME/snack_spark/*
+```
 
 When using a Spark Cluster, add the jars in $SNACKFS_HOME/snack_spark using ADD_JARS command to the cluster, or add them to the workers classpath on the cluster nodes.
 

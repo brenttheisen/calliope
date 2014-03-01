@@ -12,6 +12,7 @@ The goal we are working towards with the Tuplejump Platform is to simplify and s
 ## What's the problem with HDFS?
 
 Some major issues we had with HDFS were,
+
 * HDFS setup is complicated without the help of specialized tools
 * In HDFS the Name Node (master) introduces a single point of failure
 * Having a hot standby node and zookeeper for high availability is according to us a *hack* and not a solution. It only goes on to further complicate deployment and maintenance
@@ -29,7 +30,7 @@ SnackFS is what we call a *fat client* filesystem, in the sense that all the fil
 
 ## What is the thought process behind this?
 
-It was clear, we needed something like HDFS minus its complicated deployment and master/slave architecture and it should not rely on zookeeper or aany external system for high availability. Additionally, it also should be a dropin replacement for HDFS as many of our customers and prospective users would have applications built to work with HDFS.
+It was clear, we needed something like HDFS minus its complicated deployment and master/slave architecture and it should not rely on zookeeper or any external system for high availability. Additionally, it also should be a dropin replacement for HDFS as many of our customers and prospective users would have applications built to work with HDFS.
 
 Since we were already using Cassandra as our (un)structured data storage backend and had experimented with Datastax's Brisk and CFS in past, we decided to go with Cassandra as the file storage engine. With this decision made our task reduced to just making a HDFS compatible DFS which stored data in Cassandra.
 
@@ -37,6 +38,7 @@ Moreover using SnackFS in a environment where we already have Cassandra is easy 
 
 
 ## What do I do now?
+Here are some pointers for you,
 
 * If you are interested in reading further about the SnackFS's design and workings, [read about it here](snackfs-design.html).
 * If you just want to dive in and use SnackFS, this will help you [get started](snackfs-usage.html).

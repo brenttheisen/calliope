@@ -10,6 +10,7 @@ All you need to start using SnackFS is a Cassandra cluster (or just one instance
 ## How do I install SnackFS?
 
 You can download the binary distribution of SnackFS for your version of Scala,
+
 * [Scala 2.10.x](http://bit.ly/1jI7vVw)
 * [Scala 2.9.x](http://bit.ly/1eKV1ae)
 
@@ -18,11 +19,13 @@ and extract it. That's all there is! For your convenience you may set the SNACKF
 ## How do I add dependencies to my SBT/Maven Project?
 
 For SBT
+
 ```scala
 "com.tuplejump" %% "snackfs" % "0.6.1-EA"
 ```
 
 For Maven in a project with Scala 2.9.3,
+
 ```xml
 <dependency>
   <groupId>com.tuplejump</groupId>
@@ -32,6 +35,7 @@ For Maven in a project with Scala 2.9.3,
 ```
 
 And with Scala 2.10.3,
+
 ```xml
 <dependency>
   <groupId>com.tuplejump</groupId>
@@ -49,11 +53,15 @@ local directory /var/tuplejump/app/logs into the distributed file system
 TargetDir directory,
 using the put command:
 
-`snackfs -put /var/tuplejump/app/logs snackfs:///TargetDir/`
+```
+snackfs -put /var/tuplejump/app/logs snackfs:///TargetDir/
+```
 
 Using the copyFromLocal command:
 
-`snackfs -copyFromLocal /var/tuplejump/app/logs snackfs:///TargetDir/`
+```
+snackfs -copyFromLocal /var/tuplejump/app/logs snackfs:///TargetDir/
+```
 
 ## How do I download a file?
 You can use the -get command or the -copyToLocal command to copy a file from
@@ -61,17 +69,23 @@ SnackFS to the local system. For example, if you plan to copy /app/logs into
 the local /var/tuplejump/app/TargetDir/ directory,
 using the get command:
 
-`snackfs -get snackfs:///app/logs /var/tuplejump/app/TargetDir/`
+```
+snackfs -get snackfs:///app/logs /var/tuplejump/app/TargetDir/
+```
 
 using copyToLocal command:
 
-`snackfs -copyToLocal snackfs:///app/logs /var/tuplejump/app/TargetDir/`
+```
+snackfs -copyToLocal snackfs:///app/logs /var/tuplejump/app/TargetDir/
+```
 
 ## How do I list files in a directory?
 You can use the -ls command to list the contents of a directory. For example,
 if you want to view the list for /app directory,
 
-`snackfs -ls snackfs:///app`
+```
+snackfs -ls snackfs:///app
+```
 
 And to view a list of contents recursively, you can use the -lsr command.
 
@@ -99,11 +113,15 @@ The following Hadoop Shell commands are supported in SnackFS
 
 The help command can be used to see the usage of all or individual commands. For example,
 
-`snackfs -help`
+```
+snackfs -help
+```
 
 will display help for all the supported commands, and to see help for mkdir,
 
-`snackfs -help mkdir`
+```
+snackfs -help mkdir
+```
 
 
 
