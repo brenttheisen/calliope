@@ -4,6 +4,8 @@ title: "Calliope, by tuplejump"
 ---
 
 ## Project Updates 
+
+* Early Access release to [SnackFS 0.6.1](snackfs.html), our bitte sized Cassandra (1.2.x) backed DFS (Cross compiled with Scala 2.9.x and 2.10.x) iis available for download.
 * New [Early Accesss release 0.9.0-C2-EA](getting-started.html) working with Scala 2.10 and Spark 0.9.0 using **Cassandra 2.0.x** is now available.
 * New [Early Accesss release 0.9.0-EA](getting-started.html) working with Scala 2.10 and Spark 0.9.0 is out.
 * Calliope [Release 0.8.1](getting-started.html) working with Scala 2.9.3 adn Spark 0.8.1 is GA
