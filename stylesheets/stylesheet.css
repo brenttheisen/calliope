@@ -514,3 +514,12 @@ footer p {
 
 /* Mobile Portrait Size to Mobile Landscape Size (devices and browsers) */
 @media only screen and (max-width: 479px) {}
+
+ul.submenu {
+  margin-top: -16px;
+}
+
+ul.submenu > li {
+  padding-left: 10px;
+  list-style: none;
+}
