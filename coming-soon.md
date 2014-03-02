@@ -9,9 +9,6 @@ Calliope originally was intended to be a library to make it easy to use Spark wi
 
 We have these components ready and being tested in our labs and will be released shortly in the next E.A. release of Calliope.
 
-##SnackFS
-
-SnackFS is a HDFS compatible files system, inspired by CassandraFS. Like CassandraFS it also provides a dropin replacement to HDFS. SnackFS removes the last dependency on Hadoop, that of DFS. Focusing on a client/driver heavy design, it provides a easy to work with toolset and adds no deployment overhead to your regular C\* cluster. It is written all the way in Scala and hence we have a smaller codebase and more efficient and cleaner code to maintain.
 
 ##C\*Stream
 
