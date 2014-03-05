@@ -4,10 +4,15 @@ import scala.xml.NodeSeq
 
 object CalliopeBuild extends Build {
 
-  val VERSION = "0.9.0-U1-EA"
-  val SCALA_VERSION = "2.10.3"
-  val CAS_VERSION = if (VERSION.contains("-C2-")) "2.0.5" else "1.2.12"
-  val THRIFT_VERSION = if (VERSION.contains("-C2-")) "0.9.1" else "0.7.0"
+  lazy val USE_CASV2 = System.getenv("USE_CASV2") != null && System.getenv("USE_CASV2").equalsIgnoreCase("true")
+
+  lazy val VERSION = "0.9.0-U1-" + (if (USE_CASV2) "C2-EA" else "EA")
+
+  lazy val CAS_VERSION = if (USE_CASV2) "2.0.5" else "1.2.12"
+
+  lazy val THRIFT_VERSION = if (USE_CASV2) "0.9.1" else "0.7.0"
+
+  lazy val SCALA_VERSION = "2.10.3"
 
   def sparkDependency(scalaVer: String) =
     scalaVer match {
