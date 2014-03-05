@@ -6,7 +6,7 @@ import java.nio.ByteBuffer
 import com.tuplejump.calliope.utils.RichByteBuffer
 import org.apache.spark.SparkContext
 
-import Implicits._
+import com.tuplejump.calliope.Implicits._
 import com.tuplejump.calliope.Types.{CQLRowMap, CQLRowKeyMap, ThriftRowMap, ThriftRowKey}
 import org.apache.cassandra.thrift.CqlRow
 
@@ -44,6 +44,20 @@ class Cql3CassandraRDDSpec extends FunSpec with BeforeAndAfterAll with ShouldMat
       result should contain(Employee(20, 106, "john", "grumpy"))
     }
 
+
+    it("should be able to query selected columns") {
+      val cas = CasBuilder.cql3.withColumnFamily("cql3_test", "emp_read_test").columns("first_name", "last_name")
+
+      val casrdd = sc.cql3Cassandra[(String, String)](cas)
+
+      val result = casrdd.collect().toList
+
+      result must have length (5)
+      result should contain(("jack", "carpenter"))
+      result should contain(("john", "grumpy"))
+
+    }
+
     it("should be able to use secodary indexes") {
       val cas = CasBuilder.cql3.withColumnFamily("cql3_test", "emp_read_test").where("first_name = 'john'")
 
@@ -65,9 +79,9 @@ class Cql3CassandraRDDSpec extends FunSpec with BeforeAndAfterAll with ShouldMat
   }
 }
 
-private object Cql3CRDDTransformers {
+object Cql3CRDDTransformers {
 
-  import RichByteBuffer._
+  import com.tuplejump.calliope.utils.RichByteBuffer._
 
   implicit def row2String(key: ThriftRowKey, row: ThriftRowMap): List[String] = {
     row.keys.toList
@@ -75,6 +89,9 @@ private object Cql3CRDDTransformers {
 
   implicit def cql3Row2Emp(keys: CQLRowKeyMap, values: CQLRowMap): Employee =
     Employee(keys.get("deptid").get, keys.get("empid").get, values.get("first_name").get, values.get("last_name").get)
+
+  implicit def cql3Row2EmpName(keys: CQLRowKeyMap, values: CQLRowMap): (String, String) =
+    (values.get("first_name").get, values.get("last_name").get)
 }
 
 case class Employee(deptId: Int, empId: Int, firstName: String, lastName: String)
