@@ -10,7 +10,7 @@ For more information visit - http://tuplejump.github.com/calliope
 
 ## Download Binary
 
-You can download the library from [here](http://bit.ly/1dC3kbZ)
+You can download the library from [here](http://bit.ly/1mUWF39)
 
 ## Add to Maven
 
@@ -18,13 +18,13 @@ You can download the library from [here](http://bit.ly/1dC3kbZ)
 <dependency>
   <groupId>com.tuplejump</groupId>
   <artifactId>calliope_2.9.3</artifactId>
-  <version>0.8.1-EA</version>
+  <version>0.8.1-U1</version>
 </dependency>
 ```
 
 ## Add to SBT
 ```scala
-libraryDependencies += "com.tuplejump" %% "calliope" % "0.8.1-EA"
+libraryDependencies += "com.tuplejump" %% "calliope" % "0.8.1-U1"
 ```
 
 **Note on Scala version**
