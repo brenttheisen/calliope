@@ -4,16 +4,24 @@ import scala.xml.NodeSeq
 
 object CalliopeBuild extends Build {
 
-  val VERSION = "0.9.0-C2-EA"
+  val VERSION = "0.9.0-U1-C2-EA"
   val SCALA_VERSION = "2.10.3"
-  val SPARK_VERSION = "0.9.0-incubating"
-  val CAS_VERSION = "2.0.4"
-  val THRIFT_VERSION = "0.9.1"
+  val CAS_VERSION = if (VERSION.contains("-C2-")) "2.0.5" else "1.2.12"
+  val THRIFT_VERSION = if (VERSION.contains("-C2-")) "0.9.1" else "0.7.0"
+
+  def sparkDependency(scalaVer: String) =
+    scalaVer match {
+      case "2.10.3" =>
+        Seq("org.apache.spark" %% "spark-core" % "0.9.0-incubating",
+          "org.apache.spark" %% "spark-streaming" % "0.9.0-incubating" % "provided")
+
+      case x =>
+        Seq("org.apache.spark" %% "spark-core" % "0.9.0-incubating",
+          "org.apache.spark" %% "spark-streaming" % "0.9.0-incubating" % "provided")
+    }
 
   lazy val calliope = {
-    val dependencies = libraryDependencies ++= Seq(
-      "org.apache.spark" %% "spark-core" % SPARK_VERSION % "provided",
-      "org.apache.spark" %% "spark-streaming" % SPARK_VERSION % "provided",
+    val dependencies = Seq(
       "org.apache.cassandra" % "cassandra-all" % CAS_VERSION intransitive(),
       "org.apache.cassandra" % "cassandra-thrift" % CAS_VERSION intransitive(),
       "org.apache.thrift" % "libthrift" % THRIFT_VERSION exclude("org.slf4j", "slf4j-api") exclude("javax.servlet", "servlet-api"),
@@ -22,7 +30,8 @@ object CalliopeBuild extends Build {
     )
 
 
-    val pom = { <scm>
+    val pom = {
+      <scm>
         <url>git@github.com:tuplejump/calliope.git</url>
         <connection>scm:git:git@github.com:tuplejump/calliope.git</connection>
       </scm>
@@ -32,7 +41,8 @@ object CalliopeBuild extends Build {
             <name>Rohit Rai</name>
             <url>https://twitter.com/milliondreams</url>
           </developer>
-        </developers> }
+        </developers>
+    }
 
     val calliopeSettings = Seq(
       name := "calliope",
@@ -43,9 +53,17 @@ object CalliopeBuild extends Build {
 
       scalaVersion := SCALA_VERSION,
 
-      scalacOptions := Seq("-unchecked", "-deprecation", "-feature"),
+      crossScalaVersions := Seq("2.10.3"),
 
-      dependencies,
+      scalacOptions <<= scalaVersion map {
+        v: String =>
+          val default = "-deprecation" :: "-unchecked" :: Nil
+          if (v.startsWith("2.9.")) default else default :+ "-feature"
+      },
+
+      libraryDependencies ++= dependencies,
+
+      libraryDependencies <++= (scalaVersion)(sparkDependency),
 
       parallelExecution in Test := false,
 

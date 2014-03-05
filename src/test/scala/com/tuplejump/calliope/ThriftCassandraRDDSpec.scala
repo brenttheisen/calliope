@@ -43,6 +43,23 @@ class ThriftCassandraRDDSpec extends FunSpec with BeforeAndAfterAll with ShouldM
       resultKeys must be(Set("3musk001", "thelostworld001", "3musk003", "3musk002", "thelostworld002"))
 
     }
+
+
+    it("should be able to select certain columns from Cassandra to build RDD") {
+      val cas = CasBuilder.thrift.withColumnFamily(TEST_KEYSPACE, TEST_INPUT_COLUMN_FAMILY).columns("book")
+
+      val casrdd = sc.thriftCassandra[String, Map[String, String]](cas)
+      //This is same as calling,
+      //val casrdd = sc.cassandra[String, Map[String, String]](TEST_KEYSPACE, TEST_INPUT_COLUMN_FAMILY)
+
+      val result = casrdd.take(1).head
+
+      val resultValues = result._2.keySet
+
+      resultValues.size must be(1)
+    }
+
+
   }
 
   override def afterAll() {
