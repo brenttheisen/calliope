@@ -13,17 +13,17 @@ Download the released jar, for  and add it to your Spark shell classpath and the
 
 ### Cassandra 1.2.x
 
-You can download Calliope from for Spark v0.8.1 [here](http://bit.ly/1dC3kbZ) and for Spark v0.9 [here](http://bit.ly/1j7CpbW).
+You can download Calliope from for Spark v0.8.1 [here](http://bit.ly/1mUWF39) and for Spark v0.9.0 [here](http://bit.ly/1c8CdHq).
 
 You will also have to add [cassandra-all](http://repo1.maven.org/maven2/org/apache/cassandra/cassandra-all/1.2.12/cassandra-all-1.2.12.jar), [cassandra-thrift](http://repo1.maven.org/maven2/org/apache/cassandra/cassandra-thrift/1.2.12/cassandra-thrift-1.2.12.jar), [libthrift](http://repo1.maven.org/maven2/org/apache/thrift/libthrift/0.7.0/libthrift-0.7.0.jar) to the classpath. Or you could just add your cassandra/lib to classpath.
 
 ### Cassandra 2.0.x
 
-Currently this is built only in with Spark v0.9.x. You can use the release [0.9.0-C2-EA](http://bit.ly/MzHewC).
+Currently this is built only in with Spark v0.9.x. You can use the release [0.9.0-C2-EA](http://bit.ly/1g9SXtx).
 
 If you are using Spark v0.8.x, let us know and we will release a build against it.
 
-To use this you will have to add [cassandra-all 2.0](http://central.maven.org/maven2/org/apache/cassandra/cassandra-all/2.0.4/cassandra-all-2.0.4.jar), [cassandra-thrift 2.0](http://central.maven.org/maven2/org/apache/cassandra/cassandra-thrift/2.0.4/) and [libthrift 0.9.1](http://central.maven.org/maven2/org/apache/thrift/libthrift/0.9.1/libthrift-0.9.1.jar).
+To use this you will have to add [cassandra-all 2.0](http://central.maven.org/maven2/org/apache/cassandra/cassandra-all/2.0.5/cassandra-all-2.0.5.jar), [cassandra-thrift 2.0](http://central.maven.org/maven2/org/apache/cassandra/cassandra-thrift/2.0.4/) and [libthrift 0.9.1](http://central.maven.org/maven2/org/apache/thrift/libthrift/0.9.1/libthrift-0.9.1.jar).
 
 
 
@@ -42,7 +42,7 @@ Working with Spark 0.8.1 and Scala 2.9.x,
 <dependency>
   <groupId>com.tuplejump</groupId>
   <artifactId>calliope_2.9.3</artifactId>
-  <version>0.8.1</version>
+  <version>0.8.1-U1</version>
 </dependency>
 ```
 
@@ -53,7 +53,7 @@ Working with Spark 0.9.0 and Scala 2.10.x,
 <dependency>
   <groupId>com.tuplejump</groupId>
   <artifactId>calliope_2.10</artifactId>
-  <version>0.9.0-EA</version>
+  <version>0.9.0-U1-EA</version>
 </dependency>
 ```
 
@@ -65,7 +65,7 @@ Working with Spark 0.9.0 and Scala 2.10.x you can use the snip below. Notice the
 <dependency>
   <groupId>com.tuplejump</groupId>
   <artifactId>calliope_2.10</artifactId>
-  <version>0.9.0-C2-EA</version>
+  <version>0.9.0-U1-C2-EA</version>
 </dependency>
 ```
 
@@ -77,14 +77,14 @@ Working with Spark 0.9.0 and Scala 2.10.x you can use the snip below. Notice the
 Working with Spark 0.8.1 and Scala 2.9.x,
 
 ```scala
-libraryDependencies += "com.tuplejump" %% "calliope" % "0.8.1"
+libraryDependencies += "com.tuplejump" %% "calliope" % "0.8.1-U1"
 ```
 
 
 Working with Spark 0.9.0 and Scala 2.10.x,
 
 ```scala
-libraryDependencies += "com.tuplejump" %% "calliope" % "0.9.0-EA"
+libraryDependencies += "com.tuplejump" %% "calliope" % "0.9.0-U1-EA"
 ```
 
 #### With Cassandra 2.0.x
@@ -92,7 +92,7 @@ libraryDependencies += "com.tuplejump" %% "calliope" % "0.9.0-EA"
 Working with Spark 0.9.0 and Scala 2.10.x you can use the snip below. Notice the **C2** in the version number.
 
 ```scala
-libraryDependencies += "com.tuplejump" %% "calliope" % "0.9.0-C2-EA"
+libraryDependencies += "com.tuplejump" %% "calliope" % "0.9.0-U1-C2-EA"
 ```
 
 
