@@ -11,38 +11,36 @@ All you need to start using SnackFS is a Cassandra cluster (or just one instance
 
 You can download the binary distribution of SnackFS for your version of Scala,
 
-* [Scala 2.10.x](http://bit.ly/1jI7vVw)
-* [Scala 2.9.x](http://bit.ly/1eKV1ae)
+* [Scala 2.9.x and Cassandra 1.2.x](http://bit.ly/1kZGAEL)
+* [Scala 2.10.x and Cassandra 1.2.x](http://bit.ly/1f6AvRH)
+* [Scala 2.9.x and Cassandra 2.0.x](http://bit.ly/1nbJiZ2)
+* [Scala 2.10.x and Cassandra 2.0.x](http://bit.ly/1f6BjGj)
 
 and extract it. That's all there is! For your convenience you may set the SNACKFS_HOME environment variable to point to the extracted directory.
 
 ## How do I add dependencies to my SBT/Maven Project?
 
+* To add SnackFS to your SBT project use,
+
 For SBT
-
 ```scala
-"com.tuplejump" %% "snackfs" % "0.6.1-EA"
+"com.tuplejump" %% "snackfs" % "[SNACKFS_VERSION]"
 ```
 
-For Maven in a project with Scala 2.9.3,
+* To add SnackFS to your Maven project use this snippet with the appropriate Scala and SnackFS version
 
 ```xml
 <dependency>
   <groupId>com.tuplejump</groupId>
-  <artifactId>snackfs_2.9.3</artifactId>
-  <version>0.6.1-EA</version>
+  <artifactId>snackfs_[SCALA_VERSION]</artifactId>
+  <version>[SNACKFS_VERSION]</version>
 </dependency>
 ```
 
-And with Scala 2.10.3,
+Where SnackFS version is **0.6.2-EA** for use with *Cassandra 1.2.x*
+And **0.6.2-C2-EA** for use with *Cassandra 2.0.x*
 
-```xml
-<dependency>
-  <groupId>com.tuplejump</groupId>
-  <artifactId>snackfs_2.10</artifactId>
-  <version>0.6.1-EA</version>
-</dependency>
-```
+The Scala version is **2.9.3** for *Scala 2.9.x* and **2.10** for use with *Scala 2.10.x*
 
 
 ## How do I upload a file to SnackFS?
