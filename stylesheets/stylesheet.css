@@ -523,3 +523,10 @@ ul.submenu > li {
   padding-left: 10px;
   list-style: none;
 }
+
+.dev-partners > .head{
+  border-top: solid 1px #AAA;
+  margin-bottom: 5px;
+  font-weight: bold;
+  
+}
