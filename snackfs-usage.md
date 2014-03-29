@@ -16,7 +16,7 @@ You can download the binary distribution of SnackFS for your version of Scala,
 * [Scala 2.9.x and Cassandra 2.0.x](http://bit.ly/1nbJiZ2)
 * [Scala 2.10.x and Cassandra 2.0.x](http://bit.ly/1f6BjGj)
 
-and extract it. That's all there is! For your convenience you may set the SNACKFS_HOME environment variable to point to the extracted directory. Checkout the [Commands](#snfscmd) below to get started. Read up on [Configuration](#snfsconfig) if you need to change some settings.
+and extract it on a node running Cassandra. That's all there is! For your convenience you may set the SNACKFS_HOME environment variable to point to the extracted directory. Checkout the [Commands](#snfscmd) below to get started. Read up on [Configuration](#snfsconfig) if you need to change some settings like connecting to a remote Cassandra cluster.
 
 ## How do I add dependencies to my SBT/Maven Project?
 
