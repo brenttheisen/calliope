@@ -26,6 +26,9 @@ import org.apache.spark.SparkContext
 
 import com.tuplejump.calliope.Types._
 
+import scala.annotation.implicitNotFound
+
+
 class ThriftCassandraSparkContext(self: SparkContext) {
 
   /**
@@ -41,6 +44,9 @@ class ThriftCassandraSparkContext(self: SparkContext) {
    * @tparam T The type of RDD to return
    * @return RDD[T]
    */
+  @implicitNotFound(
+    "No transformer found for (ThriftRowKey, ThriftRowMap) => ${T}. You must have an implicit method defined of type (ThriftRowKey, ThriftRowMap) => ${T}"
+  )
   def thriftCassandra[T](host: String, port: String, keyspace: String, columnFamily: String)
                         (implicit unmarshaller: (ThriftRowKey, ThriftRowMap) => T,
                          tm: Manifest[T]): RDD[T] = {
@@ -59,6 +65,9 @@ class ThriftCassandraSparkContext(self: SparkContext) {
    * @tparam T The type of RDD to return
    * @return RDD[T]
    */
+  @implicitNotFound(
+    "No transformer found for (ThriftRowKey, ThriftRowMap) => ${T}. You must have an implicit method defined of type (ThriftRowKey, ThriftRowMap) => ${T}"
+  )
   def thriftCassandra[T](keyspace: String, columnFamily: String)
                         (implicit unmarshaller: (ThriftRowKey, ThriftRowMap) => T,
                          tm: Manifest[T]): RDD[T] = {
@@ -78,6 +87,9 @@ class ThriftCassandraSparkContext(self: SparkContext) {
    * @tparam V Type of the Value
    * @return RDD[K, V]
    */
+  @implicitNotFound(
+    "No transformer found for ThriftRowKey => ${K} or ThriftRowMap => ${V}. You must have implicit methods for each of these."
+  )
   def thriftCassandra[K, V](keyspace: String, columnFamily: String)
                            (implicit keyUnmarshaller: ThriftRowKey => K,
                             rowUnmarshaller: ThriftRowMap => V,
@@ -101,6 +113,9 @@ class ThriftCassandraSparkContext(self: SparkContext) {
    * @tparam V Type of the Value
    * @return RDD[K, V]
    */
+  @implicitNotFound(
+    "No transformer found for ThriftRowKey => ${K} or ThriftRowMap => ${V}. You must have implicit methods for each of these."
+  )
   def thriftCassandra[K, V](host: String, port: String, keyspace: String, columnFamily: String)
                            (implicit keyUnmarshaller: ThriftRowKey => K,
                             rowUnmarshaller: ThriftRowMap => V,
@@ -118,6 +133,9 @@ class ThriftCassandraSparkContext(self: SparkContext) {
    * @tparam T The type of RDD to return
    * @return RDD[T]
    */
+  @implicitNotFound(
+    "No transformer found for (ThriftRowKey, ThriftRowMap) => ${T}. You must have an implicit method defined of type (ThriftRowKey, ThriftRowMap) => ${T}"
+  )
   def thriftCassandra[T](cas: ThriftCasBuilder)
                         (implicit unmarshaller: (ThriftRowKey, ThriftRowMap) => T,
                          tm: Manifest[T]): RDD[T] = {
@@ -135,6 +153,9 @@ class ThriftCassandraSparkContext(self: SparkContext) {
    * @tparam V Type of the Value
    * @return RDD[K, V]
    */
+  @implicitNotFound(
+    "No transformer found for ThriftRowKey => ${K} or ThriftRowMap => ${V}. You must have implicit methods for each of these."
+  )
   def thriftCassandra[K, V](cas: ThriftCasBuilder)
                            (implicit keyUnmarshaller: ThriftRowKey => K,
                             rowUnmarshaller: ThriftRowMap => V,

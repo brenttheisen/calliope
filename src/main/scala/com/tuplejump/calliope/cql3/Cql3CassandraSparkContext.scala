@@ -24,6 +24,7 @@ import com.tuplejump.calliope.{Cql3CasBuilder, CasBuilder}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkContext
 import com.tuplejump.calliope.Types.{CQLRowMap, CQLRowKeyMap}
+import scala.annotation.implicitNotFound
 
 class Cql3CassandraSparkContext(self: SparkContext) {
 
@@ -41,6 +42,9 @@ class Cql3CassandraSparkContext(self: SparkContext) {
    * @tparam T The type of RDD to return
    * @return RDD[T]
    */
+  @implicitNotFound(
+    "No transformer found for (CQLRowKeyMap, CQLRowMap) => ${T}. You must have an implicit method defined of type (CQLRowKeyMap, CQLRowMap) => ${T}"
+  )
   def cql3Cassandra[T](host: String, port: String, keyspace: String, columnFamily: String)
                       (implicit unmarshaller: (CQLRowKeyMap, CQLRowMap) => T,
                        tm: Manifest[T]): RDD[T] = {
@@ -60,6 +64,9 @@ class Cql3CassandraSparkContext(self: SparkContext) {
    * @tparam T The type of RDD to return
    * @return RDD[T]
    */
+  @implicitNotFound(
+    "No transformer found for (CQLRowKeyMap, CQLRowMap) => ${T}. You must have an implicit method defined of type (CQLRowKeyMap, CQLRowMap) => ${T}"
+  )
   def cql3Cassandra[T](keyspace: String, columnFamily: String)
                       (implicit unmarshaller: (CQLRowKeyMap, CQLRowMap) => T,
                        tm: Manifest[T]): RDD[T] = {
@@ -80,6 +87,9 @@ class Cql3CassandraSparkContext(self: SparkContext) {
    * @tparam V Type of the Value
    * @return RDD[K, V]
    */
+  @implicitNotFound(
+    "No transformer found for CQLRowKeyMap => ${K} or CQLRowMap => ${V}. You must have implicit methods for each of these."
+  )
   def cql3Cassandra[K, V](keyspace: String, columnFamily: String)
                          (implicit keyUnmarshaller: CQLRowKeyMap => K,
                           rowUnmarshaller: CQLRowMap => V,
@@ -104,6 +114,9 @@ class Cql3CassandraSparkContext(self: SparkContext) {
    * @tparam V Type of the Value
    * @return RDD[K, V]
    */
+  @implicitNotFound(
+    "No transformer found for CQLRowKeyMap => ${K} or CQLRowMap => ${V}. You must have implicit methods for each of these."
+  )
   def cql3Cassandra[K, V](host: String, port: String, keyspace: String, columnFamily: String)
                          (implicit keyUnmarshaller: CQLRowKeyMap => K,
                           rowUnmarshaller: CQLRowMap => V,
@@ -121,6 +134,9 @@ class Cql3CassandraSparkContext(self: SparkContext) {
    * @tparam T The type of RDD to return
    * @return RDD[T]
    */
+  @implicitNotFound(
+    "No transformer found for (CQLRowKeyMap, CQLRowMap) => ${T}. You must have an implicit method defined of type (CQLRowKeyMap, CQLRowMap) => ${T}"
+  )
   def cql3Cassandra[T](cas: Cql3CasBuilder)
                       (implicit unmarshaller: (CQLRowKeyMap, CQLRowMap) => T,
                        tm: Manifest[T]): RDD[T] = {
@@ -138,6 +154,9 @@ class Cql3CassandraSparkContext(self: SparkContext) {
    * @tparam V Type of the Value
    * @return RDD[K, V]
    */
+  @implicitNotFound(
+    "No transformer found for CQLRowKeyMap => ${K} or CQLRowMap => ${V}. You must have implicit methods for each of these."
+  )
   def cql3Cassandra[K, V](cas: Cql3CasBuilder)
                          (implicit keyUnmarshaller: CQLRowKeyMap => K,
                           rowUnmarshaller: CQLRowMap => V,

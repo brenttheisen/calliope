@@ -22,6 +22,7 @@ package com.tuplejump.calliope.utils
 import java.nio.ByteBuffer
 import org.apache.cassandra.utils.ByteBufferUtil
 import scala.language.implicitConversions
+import java.util.Date
 
 object RichByteBuffer {
 
@@ -35,6 +36,8 @@ object RichByteBuffer {
   implicit def ByteBuffer2Long(buffer: ByteBuffer): Long = ByteBufferUtil.toLong(buffer)
 
   implicit def ByteBuffer2String(buffer: ByteBuffer): String = ByteBufferUtil.string(buffer)
+
+  implicit def ByteBuffer2Date(buffer: ByteBuffer): Date = new Date(ByteBufferUtil.toLong(buffer))
 
   implicit def TupleBB2TupleSS(t: (ByteBuffer, ByteBuffer)): (String, String) = (t._1, t._2)
 
@@ -77,6 +80,8 @@ object RichByteBuffer {
   implicit def String2ByteBuffer(f: Float): ByteBuffer = ByteBufferUtil.bytes(f)
 
   implicit def Long2ByteBuffer(l: Long): ByteBuffer = ByteBufferUtil.bytes(l)
+
+  implicit def Date2ByteBuffer(date: Date): ByteBuffer = ByteBufferUtil.bytes(date.getTime)
 
   implicit def TupleSS2TupleBB(t: (String, String)): (ByteBuffer, ByteBuffer) = (t._1, t._2)
 

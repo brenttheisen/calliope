@@ -37,6 +37,7 @@ import com.tuplejump.calliope.utils.SparkHadoopMapReduceUtil
 import Types._
 
 import scala.language.implicitConversions
+import scala.annotation.implicitNotFound
 
 
 class CassandraRDDFunctions[U](self: RDD[U])
@@ -54,6 +55,9 @@ class CassandraRDDFunctions[U](self: RDD[U])
    * @param rowMarshaller The Marshaller, that takes in an RDD entry:U and gives a msap for columns
    *
    */
+  @implicitNotFound(
+    "No transformer found for U => ThriftRowKey or U => ThriftRowMap. You must have implicit methods for these."
+  )
   def thriftSaveToCassandra(keyspace: String, columnFamily: String)
                            (implicit keyMarshaller: U => ThriftRowKey, rowMarshaller: U => ThriftRowMap) {
     thriftSaveToCassandra(CasBuilder.thrift.withColumnFamily(keyspace, columnFamily))
@@ -71,6 +75,9 @@ class CassandraRDDFunctions[U](self: RDD[U])
    * @param rowMarshaller The Marshaller, that takes in an RDD entry:U and gives a map for columns
    *
    */
+  @implicitNotFound(
+    "No transformer found for U => ThriftRowKey or U => ThriftRowMap. You must have implicit methods for these."
+  )
   def thriftSaveToCassandra(host: String, port: String, keyspace: String, columnFamily: String)
                            (implicit keyMarshaller: U => ThriftRowKey, rowMarshaller: U => ThriftRowMap) {
     thriftSaveToCassandra(CasBuilder.thrift.withColumnFamily(keyspace, columnFamily).onHost(host).onPort(port))
@@ -87,6 +94,9 @@ class CassandraRDDFunctions[U](self: RDD[U])
    * @see ThriftCasBuilder
    *
    */
+  @implicitNotFound(
+    "No transformer found for U => ThriftRowKey or U => ThriftRowMap. You must have implicit methods for these."
+  )
   def thriftSaveToCassandra(cas: ThriftCasBuilder)
                            (implicit keyMarshaller: U => ThriftRowKey, rowMarshaller: U => ThriftRowMap) {
 
@@ -132,7 +142,9 @@ class CassandraRDDFunctions[U](self: RDD[U])
    *                      in the field order in query
    *
    */
-
+  @implicitNotFound(
+    "No transformer found for U => CQLRowKeyMap or U => CQLRowValues. You must have implicit methods for these."
+  )
   def cql3SaveToCassandra(keyspace: String, columnFamily: String, updateCql: String)
                          (implicit keyMarshaller: U => CQLRowKeyMap, rowMarshaller: U => CQLRowValues) {
     cql3SaveToCassandra(CasBuilder.cql3.withColumnFamily(keyspace, columnFamily).saveWithQuery(updateCql))
@@ -154,6 +166,9 @@ class CassandraRDDFunctions[U](self: RDD[U])
    *                      in the field order in query
    *
    */
+  @implicitNotFound(
+    "No transformer found for U => CQLRowKeyMap or U => CQLRowValues. You must have implicit methods for these."
+  )
   def cql3SaveToCassandra(host: String, port: String, keyspace: String, columnFamily: String, updateCql: String)
                          (implicit keyMarshaller: U => CQLRowKeyMap, rowMarshaller: U => CQLRowValues) {
     cql3SaveToCassandra(CasBuilder.cql3.withColumnFamily(keyspace, columnFamily)
@@ -173,6 +188,9 @@ class CassandraRDDFunctions[U](self: RDD[U])
    * @see Cql3CasBuilder
    *
    */
+  @implicitNotFound(
+    "No transformer found for U => CQLRowKeyMap or U => CQLRowValues. You must have implicit methods for these."
+  )
   def cql3SaveToCassandra(cas: Cql3CasBuilder)
                          (implicit keyMarshaller: U => CQLRowKeyMap, rowMarshaller: U => CQLRowValues) {
     val conf = cas.configuration
@@ -191,6 +209,9 @@ class CassandraRDDFunctions[U](self: RDD[U])
       )
   }
 
+  @implicitNotFound(
+    "No transformer found for U => CQLRowKeyMap or U => CQLRowValues. You must have implicit methods for these."
+  )
   def simpleSavetoCas(keyspace: String, columnFamily: String, keyCols: List[CQLKeyColumnName], valueCols: List[CQLColumnName])
                      (implicit marshaller: U => CQLRowMap) {
     import com.tuplejump.calliope.Implicits._
