@@ -23,6 +23,8 @@ import java.nio.ByteBuffer
 import org.apache.cassandra.utils.ByteBufferUtil
 import scala.language.implicitConversions
 import java.util.Date
+import java.util.UUID
+
 
 object RichByteBuffer {
 
@@ -38,6 +40,8 @@ object RichByteBuffer {
   implicit def ByteBuffer2String(buffer: ByteBuffer): String = ByteBufferUtil.string(buffer)
 
   implicit def ByteBuffer2Date(buffer: ByteBuffer): Date = new Date(ByteBufferUtil.toLong(buffer))
+  
+  implicit def ByteBuffer2UUID(buffer: ByteBuffer): UUID = new UUID(buffer.getLong, buffer.getLong)
 
   implicit def TupleBB2TupleSS(t: (ByteBuffer, ByteBuffer)): (String, String) = (t._1, t._2)
 
@@ -82,6 +86,8 @@ object RichByteBuffer {
   implicit def Long2ByteBuffer(l: Long): ByteBuffer = ByteBufferUtil.bytes(l)
 
   implicit def Date2ByteBuffer(date: Date): ByteBuffer = ByteBufferUtil.bytes(date.getTime)
+  
+  implicit def UUID2ByteBuffer(uuid: UUID): ByteBuffer = ByteBufferUtil.bytes(uuid)
 
   implicit def TupleSS2TupleBB(t: (String, String)): (ByteBuffer, ByteBuffer) = (t._1, t._2)
 
