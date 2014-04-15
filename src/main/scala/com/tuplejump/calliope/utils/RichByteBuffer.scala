@@ -41,7 +41,7 @@ object RichByteBuffer {
 
   implicit def ByteBuffer2Date(buffer: ByteBuffer): Date = new Date(ByteBufferUtil.toLong(buffer))
   
-  implicit def ByteBuffer2UUID(buffer: ByteBuffer): UUID = new UUID(buffer.getLong, buffer.getLong)
+  implicit def ByteBuffer2Long(buffer: ByteBuffer): UUID = new UUID(buffer.getLong(buffer.position()), buffer.getLong(buffer.position()+8))
 
   implicit def TupleBB2TupleSS(t: (ByteBuffer, ByteBuffer)): (String, String) = (t._1, t._2)
 
