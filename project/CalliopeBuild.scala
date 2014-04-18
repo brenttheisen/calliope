@@ -8,11 +8,13 @@ object CalliopeBuild extends Build {
 
   lazy val VERSION = "0.9.0-U1-" + (if (USE_CASV2) "C2-EA" else "EA")
 
-  lazy val CAS_VERSION = if (USE_CASV2) "2.0.5" else "1.2.12"
+  lazy val CAS_VERSION = if (USE_CASV2) "2.0.5" else "1.2.16"
 
   lazy val THRIFT_VERSION = if (USE_CASV2) "0.9.1" else "0.7.0"
 
   lazy val SCALA_VERSION = "2.10.3"
+
+  lazy val DS_DRIVER_VERSION = "2.0.1"
 
   def sparkDependency(scalaVer: String) =
     scalaVer match {
@@ -30,6 +32,7 @@ object CalliopeBuild extends Build {
       "org.apache.cassandra" % "cassandra-all" % CAS_VERSION intransitive(),
       "org.apache.cassandra" % "cassandra-thrift" % CAS_VERSION intransitive(),
       "org.apache.thrift" % "libthrift" % THRIFT_VERSION exclude("org.slf4j", "slf4j-api") exclude("javax.servlet", "servlet-api"),
+      "com.datastax.cassandra" % "cassandra-driver-core" % DS_DRIVER_VERSION,
       "org.slf4j" % "slf4j-jdk14" % "1.7.5",
       "org.scalatest" %% "scalatest" % "1.9.1" % "test"
     )

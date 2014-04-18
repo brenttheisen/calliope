@@ -36,6 +36,30 @@ class RichByteBufferSpec extends FunSpec with ShouldMatchers with MustMatchers {
       300l - b must be(200l)
     }
 
+    it("should add implicit conversion between ByteBuffer and Boolean") {
+      val btrue: ByteBuffer = true
+      true must be(btrue)
+
+      val bfalse: ByteBuffer = false
+      false must be(bfalse)
+    }
+
+    it("should add implicit conversion between ByteBuffer and Boolean") {
+      import java.util.UUID
+      val uuid = UUID.randomUUID()
+      val uuidByteBuffer: ByteBuffer = uuid
+
+      uuid must be(uuidByteBuffer)
+    }
+
+
+    it("should add implicit conversion of ByteBuffer to UUID") {
+      val b: ByteBuffer = ByteBufferUtil.bytes(100)
+
+      300l - b must be(200l)
+    }
+
+
     it("should ease the conversion of list to case class") {
       case class Person(name: String, age: Int)
       val l: List[ByteBuffer] = List("Joey", 10)

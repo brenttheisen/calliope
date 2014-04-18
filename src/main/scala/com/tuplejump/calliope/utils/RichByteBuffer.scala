@@ -24,6 +24,10 @@ import org.apache.cassandra.utils.ByteBufferUtil
 import scala.language.implicitConversions
 import java.util.Date
 import java.util.UUID
+import org.apache.cassandra.cql.jdbc.JdbcDecimal
+import java.net.InetAddress
+import com.datastax.driver.core.DataType
+import java.math.BigInteger
 
 
 object RichByteBuffer {
@@ -38,12 +42,22 @@ object RichByteBuffer {
   implicit def ByteBuffer2Long(buffer: ByteBuffer): Long = ByteBufferUtil.toLong(buffer)
 
   implicit def ByteBuffer2String(buffer: ByteBuffer): String = ByteBufferUtil.string(buffer)
-  
+
   implicit def ByteBuffer2Boolean(buffer: ByteBuffer): Boolean = buffer.get() == 1
 
   implicit def ByteBuffer2Date(buffer: ByteBuffer): Date = new Date(ByteBufferUtil.toLong(buffer))
-  
-  implicit def ByteBuffer2UUID(buffer: ByteBuffer): UUID = new UUID(buffer.getLong(buffer.position()), buffer.getLong(buffer.position()+8))
+
+  implicit def ByteBuffer2UUID(buffer: ByteBuffer): UUID = new UUID(buffer.getLong(buffer.position()), buffer.getLong(buffer.position() + 8))
+
+  implicit def ByteBuffer2Byte(buffer: ByteBuffer): Byte = buffer.get()
+
+  implicit def ByteBuffer2ByteArray(buffer: ByteBuffer): Array[Byte] = ByteBufferUtil.getArray(buffer)
+
+  implicit def ByteBuffer2BigDecimal(buffer: ByteBuffer): BigDecimal = JdbcDecimal.instance.compose(buffer)
+
+  implicit def ByteBuffer2BigInteger(buffer: ByteBuffer): BigInteger = new BigInteger(ByteBufferUtil.getArray(buffer))
+
+  implicit def ByteBuffer2InetAddress(buffer: ByteBuffer): InetAddress = DataType.inet().deserialize(buffer).asInstanceOf[InetAddress]
 
   implicit def TupleBB2TupleSS(t: (ByteBuffer, ByteBuffer)): (String, String) = (t._1, t._2)
 
@@ -86,12 +100,22 @@ object RichByteBuffer {
   implicit def String2ByteBuffer(f: Float): ByteBuffer = ByteBufferUtil.bytes(f)
 
   implicit def Long2ByteBuffer(l: Long): ByteBuffer = ByteBufferUtil.bytes(l)
-  
-  implicit def Boolean2ByteBuffer(bool: Boolean): ByteBuffer = ByteBuffer.wrap(if(bool) Array(1.toByte) else Array(0.toByte))
+
+  implicit def Boolean2ByteBuffer(bool: Boolean): ByteBuffer = if (bool) Array(1.toByte) else Array(0.toByte)
 
   implicit def Date2ByteBuffer(date: Date): ByteBuffer = ByteBufferUtil.bytes(date.getTime)
-  
+
   implicit def UUID2ByteBuffer(uuid: UUID): ByteBuffer = ByteBufferUtil.bytes(uuid)
+
+  implicit def Byte2ByteBuffer(byte: Byte): ByteBuffer = Array(byte)
+
+  implicit def ByteArray2ByteBuffer(bytes: Array[Byte]): ByteBuffer = ByteBuffer.wrap(bytes)
+
+  implicit def BigDecimal2ByteBuffer(bigDec: BigDecimal): ByteBuffer = JdbcDecimal.instance.decompose(bigDec.bigDecimal)
+
+  implicit def BigInteger2ByteBuffer(bigInt: BigInteger): ByteBuffer = bigInt.toByteArray
+
+  implicit def ByteBuffer2InetAddress(address: InetAddress): ByteBuffer = ByteBufferUtil.bytes(address)
 
   implicit def TupleSS2TupleBB(t: (String, String)): (ByteBuffer, ByteBuffer) = (t._1, t._2)
 
