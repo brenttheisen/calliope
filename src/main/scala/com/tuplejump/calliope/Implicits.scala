@@ -26,22 +26,31 @@ import org.apache.spark.rdd.RDD
 import java.nio.ByteBuffer
 
 import scala.language.implicitConversions
+import com.tuplejump.calliope.macros.{Mappable, MapperMacro}
 
-
-object Types{
-  type CQLRowKeyMap = Map[CQLColumnName, CQLColumnValue]
-  type CQLRowMap = Map[CQLColumnName, CQLColumnValue]
-  type CQLRowValues = List[CQLColumnValue]
-  type CQLKeyColumnName = String
-  type CQLColumnName = String
-  type CQLColumnValue = ByteBuffer
-
-  type ThriftRowKey = ByteBuffer
-  type ThriftColumnName = ByteBuffer
-  type ThriftColumnValue = ByteBuffer
-  type ThriftRowMap = Map[ThriftColumnName, ThriftColumnValue]
+trait Generator {
+  def generate[T]: Mappable[T]
 }
 
+
+/* object Codec {
+
+  import scala.language.experimental.macros
+
+  def useLowerCaseMapper = {
+    def toLowerCase(word: String) = word.toLowerCase
+
+    def generate[T] = macro MapperMacro._generateMapper[T]
+  }
+
+  object useSnakeCaseMapper {
+    private def toSnakeCase(word: String) = word.replaceAll("([A-Z]+)([A-Z][a-z])", "$1_$2").replaceAll("([a-z\\d])([A-Z])", "$1_$2").toLowerCase
+
+  }
+
+  private def toSnakeCase(word: String) = word.replaceAll("([A-Z]+)([A-Z][a-z])", "$1_$2").replaceAll("([a-z\\d])([A-Z])", "$1_$2").toLowerCase
+
+} */
 
 object Implicits {
 
