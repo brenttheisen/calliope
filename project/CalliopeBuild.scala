@@ -1,31 +1,20 @@
 import sbt._
 import sbt.Keys._
-import scala.xml.NodeSeq
 
 object CalliopeBuild extends Build {
 
   lazy val USE_CASV2 = System.getenv("USE_CASV2") != null && System.getenv("USE_CASV2").equalsIgnoreCase("true")
 
-  lazy val VERSION = "0.9.0-U1-" + (if (USE_CASV2) "C2-EA" else "EA")
+  lazy val VERSION = "0.9.1-U1-C2-EA"
 
-  lazy val CAS_VERSION = if (USE_CASV2) "2.0.5" else "1.2.16"
+  lazy val CAS_VERSION = "2.0.7"
 
-  lazy val THRIFT_VERSION = if (USE_CASV2) "0.9.1" else "0.7.0"
+  lazy val THRIFT_VERSION = "0.9.1"
 
   lazy val SCALA_VERSION = "2.10.3"
 
   lazy val DS_DRIVER_VERSION = "2.0.1"
 
-  def sparkDependency(scalaVer: String) =
-    scalaVer match {
-      case "2.10.3" =>
-        Seq("org.apache.spark" %% "spark-core" % "0.9.0-incubating",
-          "org.apache.spark" %% "spark-streaming" % "0.9.0-incubating" % "provided")
-
-      case x =>
-        Seq("org.apache.spark" %% "spark-core" % "0.9.0-incubating",
-          "org.apache.spark" %% "spark-streaming" % "0.9.0-incubating" % "provided")
-    }
 
   lazy val calliope = {
     val dependencies = Seq(
@@ -34,6 +23,10 @@ object CalliopeBuild extends Build {
       "org.apache.thrift" % "libthrift" % THRIFT_VERSION exclude("org.slf4j", "slf4j-api") exclude("javax.servlet", "servlet-api"),
       "com.datastax.cassandra" % "cassandra-driver-core" % DS_DRIVER_VERSION,
       "org.slf4j" % "slf4j-jdk14" % "1.7.5",
+      "org.apache.spark" %% "spark-core" % "0.9.1" exclude("org.apache.hadoop", "hadoop-core"),
+      "org.apache.spark" %% "spark-streaming" % "0.9.1" % "provided",
+      "org.apache.hadoop" % "hadoop-core" % "1.0.3",
+      "org.apache.commons" % "commons-lang3" % "3.1",
       "org.scalatest" %% "scalatest" % "1.9.1" % "test"
     )
 
@@ -70,8 +63,6 @@ object CalliopeBuild extends Build {
       },
 
       libraryDependencies ++= dependencies,
-
-      libraryDependencies <++= (scalaVersion)(sparkDependency),
 
       parallelExecution in Test := false,
 

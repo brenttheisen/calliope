@@ -24,10 +24,10 @@ import org.apache.cassandra.utils.ByteBufferUtil
 import scala.language.implicitConversions
 import java.util.Date
 import java.util.UUID
-import org.apache.cassandra.cql.jdbc.JdbcDecimal
 import java.net.InetAddress
 import com.datastax.driver.core.DataType
 import java.math.BigInteger
+import scala.collection.JavaConverters._
 
 
 object RichByteBuffer {
@@ -53,7 +53,7 @@ object RichByteBuffer {
 
   implicit def ByteBuffer2ByteArray(buffer: ByteBuffer): Array[Byte] = ByteBufferUtil.getArray(buffer)
 
-  implicit def ByteBuffer2BigDecimal(buffer: ByteBuffer): BigDecimal = JdbcDecimal.instance.compose(buffer)
+  implicit def ByteBuffer2BigDecimal(buffer: ByteBuffer): BigDecimal = DataType.decimal().deserialize(buffer).asInstanceOf[BigDecimal]
 
   implicit def ByteBuffer2BigInteger(buffer: ByteBuffer): BigInteger = new BigInteger(ByteBufferUtil.getArray(buffer))
 
@@ -111,7 +111,7 @@ object RichByteBuffer {
 
   implicit def ByteArray2ByteBuffer(bytes: Array[Byte]): ByteBuffer = ByteBuffer.wrap(bytes)
 
-  implicit def BigDecimal2ByteBuffer(bigDec: BigDecimal): ByteBuffer = JdbcDecimal.instance.decompose(bigDec.bigDecimal)
+  implicit def BigDecimal2ByteBuffer(bigDec: BigDecimal): ByteBuffer = DataType.decimal().serialize(bigDec)
 
   implicit def BigInteger2ByteBuffer(bigInt: BigInteger): ByteBuffer = bigInt.toByteArray
 
@@ -130,5 +130,12 @@ object RichByteBuffer {
   implicit def MapSS2MapBB(m: Map[String, String]) = m.map {
     case (k, v) => new Tuple2[ByteBuffer, ByteBuffer](k, v)
   }.toMap
+
+  /* Conversions for Collections */
+
+  implicit def MapSS2ByteBuffer(map: Map[String, String]): ByteBuffer = DataType.map(DataType.text(), DataType.text()).serialize(map.asJava)
+
+  implicit def ByteBuffer2MapSS(buffer: ByteBuffer): Map[String, String] = DataType.map(DataType.text(), DataType.text()).deserialize(buffer).asInstanceOf[java.util.Map[String, String]].asScala.toMap
+
 }
 

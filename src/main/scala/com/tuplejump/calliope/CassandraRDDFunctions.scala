@@ -22,12 +22,12 @@ package com.tuplejump.calliope
 
 import org.apache.spark.Logging
 import org.apache.cassandra.thrift.{Column, Mutation, ColumnOrSuperColumn}
-import org.apache.cassandra.hadoop.ColumnFamilyOutputFormat
+import com.tuplejump.calliope.hadoop.ColumnFamilyOutputFormat
 
 import org.apache.spark.SparkContext._
 import org.apache.spark.rdd.RDD
 
-import org.apache.cassandra.hadoop.cql3.CqlOutputFormat
+import com.tuplejump.calliope.hadoop.cql3.CqlOutputFormat
 
 import scala.collection.JavaConversions._
 

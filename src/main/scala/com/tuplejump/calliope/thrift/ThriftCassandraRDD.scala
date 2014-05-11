@@ -19,7 +19,7 @@
 
 package com.tuplejump.calliope.thrift
 
-import org.apache.cassandra.hadoop.ColumnFamilyInputFormat
+import com.tuplejump.calliope.hadoop.ColumnFamilyInputFormat
 import scala.collection.JavaConversions._
 import java.text.SimpleDateFormat
 import java.util.Date

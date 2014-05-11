@@ -19,7 +19,7 @@
 
 package com.tuplejump.calliope
 
-import org.apache.cassandra.hadoop.ConfigHelper
+import com.tuplejump.calliope.hadoop.ConfigHelper
 import org.apache.cassandra.thrift.{SliceRange, SlicePredicate}
 import org.apache.hadoop.mapreduce.Job
 import org.apache.cassandra.utils.ByteBufferUtil
@@ -27,7 +27,7 @@ import org.apache.cassandra.utils.ByteBufferUtil
 import scala.collection.JavaConversions._
 import com.tuplejump.calliope.queries.FinalQuery
 import org.apache.hadoop.conf.Configuration
-import org.apache.cassandra.hadoop.cql3.CqlConfigHelper
+import com.tuplejump.calliope.hadoop.cql3.CqlConfigHelper
 
 trait CasBuilder extends Serializable {
   def configuration: Configuration
