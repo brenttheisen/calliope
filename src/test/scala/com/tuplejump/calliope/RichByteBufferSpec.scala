@@ -14,49 +14,50 @@ class RichByteBufferSpec extends FunSpec with ShouldMatchers with MustMatchers {
     it("should should add implicit conversion of ByteBuffer to String") {
       val b = ByteBufferUtil.bytes("Test")
 
-      b.length must be(4) //Should come from test
-      "Test".equalsIgnoreCase(b) must be(true)
+      val s: String = b
+      s.length must be(4) //Should come from test
+      "Test".equalsIgnoreCase(s) must be(true)
     }
 
     it("should add implicit conversion of ByteBuffer to Int") {
       val b: ByteBuffer = ByteBufferUtil.bytes(100)
 
-      100 % b must be(0)
+      val i: Int = b
+      100 / i must be(1)
     }
 
     it("should add implicit conversion of ByteBuffer to Double") {
-      val b: ByteBuffer = ByteBufferUtil.bytes(100)
+      val b: ByteBuffer = ByteBufferUtil.bytes(100d)
 
-      300d - b must be(200d)
+      val d: Double = b
+      300d - d must be(200d)
     }
 
     it("should add implicit conversion of ByteBuffer to Long") {
-      val b: ByteBuffer = ByteBufferUtil.bytes(100)
+      val b: ByteBuffer = ByteBufferUtil.bytes(100l)
 
-      300l - b must be(200l)
+      val l: Long = b
+      300l - l must be(200l)
     }
 
     it("should add implicit conversion between ByteBuffer and Boolean") {
       val btrue: ByteBuffer = true
-      true must be(btrue)
+      val vtrue: Boolean = btrue
+      true must be(vtrue)
 
       val bfalse: ByteBuffer = false
-      false must be(bfalse)
+      val vfalse: Boolean = bfalse
+      false must be(vfalse)
     }
 
-    it("should add implicit conversion between ByteBuffer and Boolean") {
+    it("should add implicit conversion between ByteBuffer and UUID") {
       import java.util.UUID
       val uuid = UUID.randomUUID()
       val uuidByteBuffer: ByteBuffer = uuid
 
-      uuid must be(uuidByteBuffer)
-    }
+      val vuuid: UUID = uuidByteBuffer
 
-
-    it("should add implicit conversion of ByteBuffer to UUID") {
-      val b: ByteBuffer = ByteBufferUtil.bytes(100)
-
-      300l - b must be(200l)
+      uuid must be(vuuid)
     }
 
 

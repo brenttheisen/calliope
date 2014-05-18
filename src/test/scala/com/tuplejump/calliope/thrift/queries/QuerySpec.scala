@@ -5,6 +5,7 @@ import RichByteBuffer._
 import org.apache.cassandra.thrift.IndexOperator
 import org.scalatest.FunSpec
 import org.scalatest.matchers.{MustMatchers, ShouldMatchers}
+import java.nio.ByteBuffer
 
 class QuerySpec extends FunSpec with ShouldMatchers with MustMatchers {
 
@@ -16,7 +17,6 @@ class QuerySpec extends FunSpec with ShouldMatchers with MustMatchers {
 
     it("should return a FirstColumn on call to where") {
       val col = Query().where("name")
-      col.isInstanceOf[FirstColumn] must be(true)
 
       col.isEq _ //Assert we have the equal function
 
@@ -27,7 +27,7 @@ class QuerySpec extends FunSpec with ShouldMatchers with MustMatchers {
       //col.isLte
 
       //to prevent compilation error
-      true
+      col.isInstanceOf[FirstColumn] must be(true)
     }
 
     it("should create InitializedQuery on call to isEq in FirstColumn") {
@@ -37,10 +37,8 @@ class QuerySpec extends FunSpec with ShouldMatchers with MustMatchers {
       //This will not compile
       //query.where
 
-      q.and _ //verify that you have 'and'
-
       //to prevent compilation error
-      true
+      q.and _ //verify that you have 'and'
     }
 
     it("should give regular column from call to and on initialized query") {
@@ -53,9 +51,6 @@ class QuerySpec extends FunSpec with ShouldMatchers with MustMatchers {
       col.isGte _
       col.isLt _
       col.isLte _
-
-      //to prevent compilation error
-      true
     }
 
     it("should build correct IndexExpression with single condition") {
@@ -72,9 +67,6 @@ class QuerySpec extends FunSpec with ShouldMatchers with MustMatchers {
       "name".equalsIgnoreCase(expr.bufferForColumn_name()) must be(true)
       "John".equalsIgnoreCase(expr.bufferForValue()) must be(true)
       expr.getOp must be(IndexOperator.EQ)
-
-      //to prevent compilation error
-      true
     }
 
     it("should build correct IndexExpression list with multiple conditions") {
@@ -93,10 +85,9 @@ class QuerySpec extends FunSpec with ShouldMatchers with MustMatchers {
       val secExpr = exprs(1)
 
       "age".equalsIgnoreCase(secExpr.bufferForColumn_name()) must be(true)
-      10 - secExpr.bufferForValue() must be(0)
+      val value: Int = secExpr.bufferForValue()
+      10 - value must be(0)
       secExpr.getOp must be(IndexOperator.GT)
-
-
     }
   }
 }
