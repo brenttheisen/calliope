@@ -28,13 +28,26 @@ import com.tuplejump.calliope.CasBuilder
 import org.apache.spark._
 import org.apache.spark.rdd.RDD
 import com.tuplejump.calliope.utils.{SparkHadoopMapReduceUtil, CassandraPartition}
-import com.tuplejump.calliope.Types.{CQLRowMap, CQLRowKeyMap}
+import com.tuplejump.calliope.Types._
 import scala.reflect.ClassTag
+import com.tuplejump.calliope.utils.CassandraPartition
+import com.tuplejump.calliope.utils.CassandraPartition
 
+private[calliope] trait Unmarshaller[T] {
+  def unmarshall(k: CQLRowKeyMap, v: CQLRowMap): T
+}
+
+private[calliope] case class KVUnmarshaller[T](val transform: (CQLRowKeyMap, CQLRowMap) => T) extends Unmarshaller[T] {
+  override def unmarshall(k: CQLRowKeyMap, v: CQLRowMap): T = transform(k, v)
+}
+
+private[calliope] case class SimpleRowUnmarshaller[T](val transform: CQLRowMap => T) extends Unmarshaller[T] {
+  override def unmarshall(k: CQLRowKeyMap, v: CQLRowMap): T = transform(k ++ v)
+}
 
 private[calliope] class Cql3CassandraRDD[T: ClassTag](sc: SparkContext,
-                                                           @transient cas: CasBuilder,
-                                                           unmarshaller: (CQLRowKeyMap, CQLRowMap) => T)
+                                                      @transient cas: CasBuilder,
+                                                      unmarshaller: Unmarshaller[T])
   extends RDD[T](sc, Nil)
   with SparkHadoopMapReduceUtil
   with Logging {
@@ -82,7 +95,7 @@ private[calliope] class Cql3CassandraRDD[T: ClassTag](sc: SparkContext,
       }
       havePair = false
 
-      unmarshaller(reader.getCurrentKey.toMap, reader.getCurrentValue.toMap)
+      unmarshaller.unmarshall(reader.getCurrentKey.toMap, reader.getCurrentValue.toMap)
     }
 
     private def close() {

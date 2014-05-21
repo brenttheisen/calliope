@@ -1,5 +1,6 @@
 import sbt._
 import sbt.Keys._
+import scala.xml.NodeSeq
 
 object CalliopeBuild extends Build {
 
@@ -15,6 +16,7 @@ object CalliopeBuild extends Build {
 
   lazy val DS_DRIVER_VERSION = "2.0.1"
 
+  lazy val PARADISE_VERSION = "2.0.0"
 
   lazy val calliope = {
     val dependencies = Seq(
@@ -64,6 +66,8 @@ object CalliopeBuild extends Build {
 
       libraryDependencies ++= dependencies,
 
+      libraryDependencies <++= (scalaVersion)(sparkDependency),
+
       parallelExecution in Test := false,
 
       pomExtra := pom,
@@ -102,6 +106,18 @@ object CalliopeBuild extends Build {
       id = "calliope",
       base = file("."),
       settings = Project.defaultSettings ++ calliopeSettings ++ net.virtualvoid.sbt.graph.Plugin.graphSettings
-    )
+    ) dependsOn (macros) aggregate (macros)
   }
+
+  lazy val macros = Project(
+    id = "calliope-macros",
+    base = file("macros"),
+    settings = Project.defaultSettings ++ Seq(
+      addCompilerPlugin("org.scalamacros" % "paradise" % PARADISE_VERSION cross CrossVersion.full),
+      libraryDependencies ++= Seq("org.scalamacros" %% "quasiquotes" % PARADISE_VERSION),
+      libraryDependencies <+= (scalaVersion)("org.scala-lang" % "scala-reflect" % _),
+      scalacOptions := "-Ymacro-debug-lite" :: Nil
+    )
+  )
+
 }
