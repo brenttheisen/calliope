@@ -31,7 +31,7 @@ import java.util.Map;
  * OutputFormat that allows reduce tasks to store keys (and corresponding
  * binded variable values) as CQL rows (and respective columns) in a given
  * ColumnFamily.
- * <p/>
+ *
  * <p>
  * As is the case with the {@link com.tuplejump.calliope.hadoop.ColumnFamilyInputFormat},
  * you need to set the prepared statement in your
@@ -42,7 +42,7 @@ import java.util.Map;
  * {@link com.tuplejump.calliope.hadoop.ConfigHelper#setOutputColumnFamily} method, is provided to make this
  * simple.
  * </p>
- * <p/>
+ * 
  * <p>
  * For the sake of performance, this class employs a lazy write-back caching
  * mechanism, where its record writer prepared statement binded variable values

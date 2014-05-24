@@ -64,7 +64,7 @@ public class ColumnFamilyInputFormat extends AbstractColumnFamilyInputFormat<Byt
                 null);
 
         ColumnFamilyRecordReader recordReader = new ColumnFamilyRecordReader(jobConf.getInt(CASSANDRA_HADOOP_MAX_KEY_SIZE, CASSANDRA_HADOOP_MAX_KEY_SIZE_DEFAULT));
-        recordReader.initialize((InputSplit) split, tac);
+        recordReader.initialize((org.apache.hadoop.mapreduce.InputSplit)split, tac);
         return recordReader;
     }
 

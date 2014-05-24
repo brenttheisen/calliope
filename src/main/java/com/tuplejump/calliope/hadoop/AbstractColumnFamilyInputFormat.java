@@ -93,7 +93,6 @@ public abstract class AbstractColumnFamilyInputFormat<K, Y> extends InputFormat<
 
     public List<InputSplit> getSplits(JobContext context) throws IOException {
         Configuration conf = HadoopCompat.getConfiguration(context);
-        ;
 
         validateConfiguration(conf);
 
@@ -230,12 +229,14 @@ public abstract class AbstractColumnFamilyInputFormat<K, Y> extends InputFormat<
             if (host == null || host.equals("0.0.0.0"))
                 host = range.endpoints.get(i);
 
+            //System.out.println(String.format("RANGE: %s - %s ON %s", range.start_token, range.end_token, range.endpoints));
             try {
                 Cassandra.Client client = ConfigHelper.createConnection(conf, host, ConfigHelper.getInputRpcPort(conf));
                 client.set_keyspace(keyspace);
 
                 try {
-                    return client.describe_splits_ex(cfName, range.start_token, range.end_token, splitsize);
+                    List<CfSplit> cfs = client.describe_splits_ex(cfName, range.start_token, range.end_token, splitsize);
+                    return cfs;
                 } catch (TApplicationException e) {
                     // fallback to guessing split size if talking to a server without describe_splits_ex method
                     if (e.getType() == TApplicationException.UNKNOWN_METHOD) {
@@ -268,6 +269,7 @@ public abstract class AbstractColumnFamilyInputFormat<K, Y> extends InputFormat<
         List<TokenRange> map;
         try {
             map = client.describe_local_ring(ConfigHelper.getInputKeyspace(conf));
+            logger.info("GOT TOKEN RANGES: " + map.size());
         } catch (InvalidRequestException e) {
             throw new RuntimeException(e);
         } catch (TException e) {
@@ -281,7 +283,7 @@ public abstract class AbstractColumnFamilyInputFormat<K, Y> extends InputFormat<
     //
     public org.apache.hadoop.mapred.InputSplit[] getSplits(JobConf jobConf, int numSplits) throws IOException {
         TaskAttemptContext tac = HadoopCompat.newTaskAttemptContext(jobConf, new TaskAttemptID());
-        List<InputSplit> newInputSplits = this.getSplits(tac);
+        List<org.apache.hadoop.mapreduce.InputSplit> newInputSplits = this.getSplits(tac);
         org.apache.hadoop.mapred.InputSplit[] oldInputSplits = new org.apache.hadoop.mapred.InputSplit[newInputSplits.size()];
         for (int i = 0; i < newInputSplits.size(); i++)
             oldInputSplits[i] = (ColumnFamilySplit) newInputSplits.get(i);

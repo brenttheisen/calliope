@@ -19,7 +19,6 @@
 
 package com.tuplejump.calliope.cql3
 
-import java.nio.ByteBuffer
 import com.tuplejump.calliope.{Cql3CasBuilder, CasBuilder}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkContext
@@ -142,40 +141,6 @@ class Cql3CassandraSparkContext(self: SparkContext) {
                        tm: Manifest[T]): RDD[T] = {
     new Cql3CassandraRDD[T](self, cas, KVUnmarshaller(unmarshaller))
   }
-
-
-  /**
-   * Create a RDD[T] from data fetched from the configured  Cassandra keyspace and column family accessible
-   * at configured host and port.
-   *
-   * //@param cas
-   * //@param unmarshaller
-   * //@param tm
-   * //@tparam T
-   * //@return
-   */
-  /* def cql3Cassandra[T](cas: Cql3CasBuilder)
-                      (implicit unmarshaller: CQLRowMap => T,
-                       tm: Manifest[T]): RDD[T] = {
-    new Cql3CassandraRDD[T](self, cas, SimpleRowUnmarshaller(unmarshaller))
-  } */
-
-  /**
-   * Create a RDD[T] from data fetched from the configured  Cassandra keyspace and column family accessible
-   * at configured host and port.
-   *
-   * //@param cas
-   * //@param mapper
-   * //@param tm
-   * //@tparam T
-   * @//return
-   */
-  /* def cql3Cassandra[T](cas: Cql3CasBuilder)
-                      (implicit mapper: Mappable[T],
-                       tm: Manifest[T]): RDD[T] = {
-    implicit def unmarshaller(r: CQLRowMap) = mapper.fromMap(r)
-    this.cql3Cassandra[T](cas)
-  } */
 
   /**
    * Create a RDD[K, V] from data fetched from the configured Cassandra keyspace and column family accessible

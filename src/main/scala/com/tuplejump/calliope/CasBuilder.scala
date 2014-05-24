@@ -45,6 +45,12 @@ object CasBuilder {
    * @return BaseThriftCasBuilder
    */
   def thrift = new BaseThriftCasBuilder()
+
+  /**
+   * Get a Native driver based configuration builder
+   * @return
+   */
+  def native = new BaseNativeCasBuilder()
 }
 
 class BaseThriftCasBuilder {
@@ -68,6 +74,37 @@ class BaseCql3CasBuilder {
   def withColumnFamily(keyspace: String, columnFamily: String) = new Cql3CasBuilder(keyspace, columnFamily)
 }
 
+class BaseNativeCasBuilder {
+  /**
+   * Configure the cassandra keyspace and column family to read from
+   * @param keyspace Keyspace name
+   * @param columnFamily Column family nam
+   * @param inputCql The CQL query to use to fetch the records. It must be of the form
+   *                 <quote>"select (*|[list of columns]) where token([partition_keys]) > ? and token([partition_keys]) < ? [other where clauses] allow filtering"</quote>
+   * @return Cql3CasBuilder
+   */
+  def withColumnFamilyAndQuery(keyspace: String, columnFamily: String, inputCql: String) = {
+    val cql = if (inputCql.trim.endsWith(";")) inputCql.trim.replaceAll(";$", "") else inputCql
+    val finalCql = if (cql.endsWith("allow filtering")) cql else cql + " allow filtering"
+    new NativeCasBuilder(keyspace, columnFamily, finalCql)
+  }
+
+  /**
+   * Configure the cassandra keyspace and column family to read from and the partition key columns to create the input splits
+   * @param keyspace Keyspace to read from
+   * @param columnFamily Column Family to read from
+   * @param keys The partition key column names that are part of <b>token</b> function. You should pass all the keys here. It defaults to id
+   * @return
+   */
+  def withColumnFamilyAndKeyColumns(keyspace: String, columnFamily: String, keys: String*) = {
+    require(keys != null && keys.length > 0, "Must pass all the partition keys columns, which cannot be empty")
+    val keyString = keys.mkString(",")
+    withColumnFamilyAndQuery(keyspace, columnFamily, s"select * from $columnFamily where token($keyString) > ? and token($keyString) < ? allow filtering")
+  }
+
+
+}
+
 abstract class CommonCasBuilder(keyspace: String,
                                 columnFamily: String,
                                 hasWideRows: Boolean = false,
@@ -79,12 +116,13 @@ abstract class CommonCasBuilder(keyspace: String,
                                 password: Option[String] = None,
                                 readConsistencyLevel: Option[String] = None,
                                 writeConsistencyLevel: Option[String] = None,
+                                inputSplitSize: Option[Long] = None,
                                 outputCompressionClass: Option[String] = None,
                                 outputCompressionChunkLength: Option[String] = None,
                                 customConfig: Option[Configuration] = None
                                  ) extends CasBuilder {
 
-  protected def configure: Job = {
+  protected def configure(): Job = {
     val job: Job = customConfig match {
       case Some(config) => new Job(config)
       case None => new Job()
@@ -94,28 +132,28 @@ abstract class CommonCasBuilder(keyspace: String,
     ConfigHelper.setInputColumnFamily(job.getConfiguration, keyspace, columnFamily, hasWideRows)
     ConfigHelper.setInputInitialAddress(job.getConfiguration, host)
     ConfigHelper.setInputRpcPort(job.getConfiguration, port)
-    ConfigHelper.setInputPartitioner(job.getConfiguration(), partitioner.toString)
+    ConfigHelper.setInputPartitioner(job.getConfiguration, partitioner.toString)
 
     readConsistencyLevel map {
-      case cl: String => ConfigHelper.setReadConsistencyLevel(job.getConfiguration(), cl)
+      case cl: String => ConfigHelper.setReadConsistencyLevel(job.getConfiguration, cl)
     }
 
     //For Output
     ConfigHelper.setOutputColumnFamily(job.getConfiguration, keyspace, columnFamily)
     ConfigHelper.setOutputInitialAddress(job.getConfiguration, host)
     ConfigHelper.setOutputRpcPort(job.getConfiguration, port)
-    ConfigHelper.setOutputPartitioner(job.getConfiguration(), partitioner.toString)
+    ConfigHelper.setOutputPartitioner(job.getConfiguration, partitioner.toString)
 
     writeConsistencyLevel map {
-      case cl: String => ConfigHelper.setWriteConsistencyLevel(job.getConfiguration(), cl)
+      case cl: String => ConfigHelper.setWriteConsistencyLevel(job.getConfiguration, cl)
     }
 
     outputCompressionClass map {
-      case cc: String => ConfigHelper.setOutputCompressionClass(job.getConfiguration(), cc)
+      case cc: String => ConfigHelper.setOutputCompressionClass(job.getConfiguration, cc)
     }
 
     outputCompressionChunkLength map {
-      case ccl: String => ConfigHelper.setOutputCompressionChunkLength(job.getConfiguration(), ccl)
+      case ccl: String => ConfigHelper.setOutputCompressionChunkLength(job.getConfiguration, ccl)
     }
 
     username map {
@@ -124,6 +162,10 @@ abstract class CommonCasBuilder(keyspace: String,
 
     password map {
       case pass: String => ConfigHelper.setInputKeyspacePassword(job.getConfiguration, pass)
+    }
+
+    inputSplitSize map {
+      case isize => ConfigHelper.setInputSplitSize(job.getConfiguration, isize.toInt)
     }
 
     job
@@ -145,24 +187,25 @@ class ThriftCasBuilder(keyspace: String,
                        colSliceTo: Array[Byte] = Array.empty[Byte],
                        readConsistencyLevel: Option[String] = None,
                        writeConsistencyLevel: Option[String] = None,
+                       inputSplitSize: Option[Long] = None,
                        outputCompressionClass: Option[String] = None,
                        outputCompressionChunkLength: Option[String] = None,
                        customConfig: Option[Configuration] = None
-                        ) extends CommonCasBuilder(keyspace, columnFamily, hasWideRows, host, port, partitioner, columns, username, password, readConsistencyLevel, writeConsistencyLevel, outputCompressionClass, outputCompressionChunkLength, customConfig) {
+                        ) extends CommonCasBuilder(keyspace, columnFamily, hasWideRows, host, port, partitioner, columns, username, password, readConsistencyLevel, writeConsistencyLevel, inputSplitSize, outputCompressionClass, outputCompressionChunkLength, customConfig) {
 
   /**
    * Configure the Cassandra node to use for initial connection. This must be accessible from Spark Context.
    * @param host
    */
   def onHost(host: String) = new ThriftCasBuilder(
-    keyspace, columnFamily, hasWideRows, host, port, partitioner, columns, username, password, query, colSliceFrom, colSliceTo, readConsistencyLevel, writeConsistencyLevel, outputCompressionClass, outputCompressionChunkLength, customConfig)
+    keyspace, columnFamily, hasWideRows, host, port, partitioner, columns, username, password, query, colSliceFrom, colSliceTo, readConsistencyLevel, writeConsistencyLevel, inputSplitSize, outputCompressionClass, outputCompressionChunkLength, customConfig)
 
   /**
    * Configure the port to use for initial connection
    * @param port
    */
   def onPort(port: String) = new ThriftCasBuilder(
-    keyspace, columnFamily, hasWideRows, host, port, partitioner, columns, username, password, query, colSliceFrom, colSliceTo, readConsistencyLevel, writeConsistencyLevel, outputCompressionClass, outputCompressionChunkLength, customConfig)
+    keyspace, columnFamily, hasWideRows, host, port, partitioner, columns, username, password, query, colSliceFrom, colSliceTo, readConsistencyLevel, writeConsistencyLevel, inputSplitSize, outputCompressionClass, outputCompressionChunkLength, customConfig)
 
   /**
    * The partitioner to use, Random/Ordered/Murmur3
@@ -170,28 +213,28 @@ class ThriftCasBuilder(keyspace: String,
    * @return
    */
   def patitionedUsing(partitioner: CasPartitioners.Value) = new ThriftCasBuilder(
-    keyspace, columnFamily, hasWideRows, host, port, partitioner, columns, username, password, query, colSliceFrom, colSliceTo, readConsistencyLevel, writeConsistencyLevel, outputCompressionClass, outputCompressionChunkLength, customConfig)
+    keyspace, columnFamily, hasWideRows, host, port, partitioner, columns, username, password, query, colSliceFrom, colSliceTo, readConsistencyLevel, writeConsistencyLevel, inputSplitSize, outputCompressionClass, outputCompressionChunkLength, customConfig)
 
   /**
    * Columns (as List[String]) to read from Cassandra
    * @param columns
    */
-  def columns(columns: List[String]) = new ThriftCasBuilder(
-    keyspace, columnFamily, hasWideRows, host, port, partitioner, Some(columns), username, password, query, colSliceFrom, colSliceTo, readConsistencyLevel, writeConsistencyLevel, outputCompressionClass, outputCompressionChunkLength, customConfig)
+  def columns(columns: List[String]): ThriftCasBuilder = new ThriftCasBuilder(
+    keyspace, columnFamily, hasWideRows, host, port, partitioner, Some(columns), username, password, query, colSliceFrom, colSliceTo, readConsistencyLevel, writeConsistencyLevel, inputSplitSize, outputCompressionClass, outputCompressionChunkLength, customConfig)
 
   /**
    * Columns to read from Cassandra
    * @param columns
    */
-  def columns(columns: String*) = new ThriftCasBuilder(
-    keyspace, columnFamily, hasWideRows, host, port, partitioner, Some(columns.toList), username, password, query, colSliceFrom, colSliceTo, readConsistencyLevel, writeConsistencyLevel, outputCompressionClass, outputCompressionChunkLength, customConfig)
+  def columns(columns: String*): ThriftCasBuilder = new ThriftCasBuilder(
+    keyspace, columnFamily, hasWideRows, host, port, partitioner, Some(columns.toList), username, password, query, colSliceFrom, colSliceTo, readConsistencyLevel, writeConsistencyLevel, inputSplitSize, outputCompressionClass, outputCompressionChunkLength, customConfig)
 
   /**
    * Whether the column family is wide row.
    * @param hasWideRows
    */
   def forWideRows(hasWideRows: Boolean) = new ThriftCasBuilder(
-    keyspace, columnFamily, hasWideRows, host, port, partitioner, columns, username, password, query, colSliceFrom, colSliceTo, readConsistencyLevel, writeConsistencyLevel, outputCompressionClass, outputCompressionChunkLength, customConfig)
+    keyspace, columnFamily, hasWideRows, host, port, partitioner, columns, username, password, query, colSliceFrom, colSliceTo, readConsistencyLevel, writeConsistencyLevel, inputSplitSize, outputCompressionClass, outputCompressionChunkLength, customConfig)
 
   /**
    * Range of columns to fetch
@@ -199,28 +242,28 @@ class ThriftCasBuilder(keyspace: String,
    * @param finish
    */
   def columnsInRange(start: Array[Byte], finish: Array[Byte]) = new ThriftCasBuilder(
-    keyspace, columnFamily, hasWideRows, host, port, partitioner, columns, username, password, query, start, finish, readConsistencyLevel, writeConsistencyLevel, outputCompressionClass, outputCompressionChunkLength, customConfig)
+    keyspace, columnFamily, hasWideRows, host, port, partitioner, columns, username, password, query, start, finish, readConsistencyLevel, writeConsistencyLevel, inputSplitSize, outputCompressionClass, outputCompressionChunkLength, customConfig)
 
   /**
    * User to login to cassandra cluster
    * @param user
    */
   def authAs(user: String) = new ThriftCasBuilder(
-    keyspace, columnFamily, hasWideRows, host, port, partitioner, columns, Some(user), password, query, colSliceFrom, colSliceTo, readConsistencyLevel, writeConsistencyLevel, outputCompressionClass, outputCompressionChunkLength, customConfig)
+    keyspace, columnFamily, hasWideRows, host, port, partitioner, columns, Some(user), password, query, colSliceFrom, colSliceTo, readConsistencyLevel, writeConsistencyLevel, inputSplitSize, outputCompressionClass, outputCompressionChunkLength, customConfig)
 
   /**
    * Password for user to authenticate with cassandra
    * @param password
    */
   def withPassword(password: String) = new ThriftCasBuilder(
-    keyspace, columnFamily, hasWideRows, host, port, partitioner, columns, username, Some(password), query, colSliceFrom, colSliceTo, readConsistencyLevel, writeConsistencyLevel, outputCompressionClass, outputCompressionChunkLength, customConfig)
+    keyspace, columnFamily, hasWideRows, host, port, partitioner, columns, username, Some(password), query, colSliceFrom, colSliceTo, readConsistencyLevel, writeConsistencyLevel, inputSplitSize, outputCompressionClass, outputCompressionChunkLength, customConfig)
 
   /**
    * Query to filter using secondary indexes
    * @param query
    */
   def where(query: FinalQuery) = new ThriftCasBuilder(
-    keyspace, columnFamily, hasWideRows, host, port, partitioner, columns, username, password, Some(query), colSliceFrom, colSliceTo, readConsistencyLevel, writeConsistencyLevel, outputCompressionClass, outputCompressionChunkLength, customConfig)
+    keyspace, columnFamily, hasWideRows, host, port, partitioner, columns, username, password, Some(query), colSliceFrom, colSliceTo, readConsistencyLevel, writeConsistencyLevel, inputSplitSize, outputCompressionClass, outputCompressionChunkLength, customConfig)
 
   /**
    * Use this consistency level for read (do this only if you are sure that you need it, this may affect the performance)
@@ -228,7 +271,7 @@ class ThriftCasBuilder(keyspace: String,
    * @return
    */
   def useReadConsistencyLevel(consistencyLevel: String) = new ThriftCasBuilder(
-    keyspace, columnFamily, hasWideRows, host, port, partitioner, columns, username, password, query, colSliceFrom, colSliceTo, Some(consistencyLevel), writeConsistencyLevel, outputCompressionClass, outputCompressionChunkLength, customConfig)
+    keyspace, columnFamily, hasWideRows, host, port, partitioner, columns, username, password, query, colSliceFrom, colSliceTo, Some(consistencyLevel), writeConsistencyLevel, inputSplitSize, outputCompressionClass, outputCompressionChunkLength, customConfig)
 
   /**
    * Use this consistency level for write (do this only if you are sure that you need it, this may affect the performance)
@@ -236,7 +279,14 @@ class ThriftCasBuilder(keyspace: String,
    * @return
    */
   def useWriteConsistencyLevel(consistencyLevel: String) = new ThriftCasBuilder(
-    keyspace, columnFamily, hasWideRows, host, port, partitioner, columns, username, password, query, colSliceFrom, colSliceTo, readConsistencyLevel, Some(consistencyLevel), outputCompressionClass, outputCompressionChunkLength, customConfig)
+    keyspace, columnFamily, hasWideRows, host, port, partitioner, columns, username, password, query, colSliceFrom, colSliceTo, readConsistencyLevel, Some(consistencyLevel), inputSplitSize, outputCompressionClass, outputCompressionChunkLength, customConfig)
+
+  /**
+   * Set the number of keys to in split range that is processed per task
+   * @param splitSize
+   */
+  def inputSplitSize(splitSize: Int) = new ThriftCasBuilder(
+    keyspace, columnFamily, hasWideRows, host, port, partitioner, columns, username, password, query, colSliceFrom, colSliceTo, readConsistencyLevel, writeConsistencyLevel, Some(splitSize), outputCompressionClass, outputCompressionChunkLength, customConfig)
 
   /**
    * Set the compression class to use to output from maps job
@@ -244,7 +294,7 @@ class ThriftCasBuilder(keyspace: String,
    * @return
    */
   def useOutputCompressionClass(compressionClass: String) = new ThriftCasBuilder(
-    keyspace, columnFamily, hasWideRows, host, port, partitioner, columns, username, password, query, colSliceFrom, colSliceTo, readConsistencyLevel, writeConsistencyLevel, Some(compressionClass), outputCompressionChunkLength, customConfig)
+    keyspace, columnFamily, hasWideRows, host, port, partitioner, columns, username, password, query, colSliceFrom, colSliceTo, readConsistencyLevel, writeConsistencyLevel, inputSplitSize, Some(compressionClass), outputCompressionChunkLength, customConfig)
 
   /**
    * Set the size of data to compression in a chunk
@@ -252,7 +302,7 @@ class ThriftCasBuilder(keyspace: String,
    * @return
    */
   def setOutputCompressionChunkLength(chunkLength: String) = new ThriftCasBuilder(
-    keyspace, columnFamily, hasWideRows, host, port, partitioner, columns, username, password, query, colSliceFrom, colSliceTo, readConsistencyLevel, writeConsistencyLevel, outputCompressionClass, Some(chunkLength), customConfig)
+    keyspace, columnFamily, hasWideRows, host, port, partitioner, columns, username, password, query, colSliceFrom, colSliceTo, readConsistencyLevel, writeConsistencyLevel, inputSplitSize, outputCompressionClass, Some(chunkLength), customConfig)
 
   /**
    * Apply the given hadoop configuration
@@ -260,7 +310,7 @@ class ThriftCasBuilder(keyspace: String,
    * @return
    */
   def applyCustomConfig(config: Configuration) = new ThriftCasBuilder(
-    keyspace, columnFamily, hasWideRows, host, port, partitioner, columns, username, password, query, colSliceFrom, colSliceTo, readConsistencyLevel, writeConsistencyLevel, outputCompressionClass, outputCompressionChunkLength, Some(config))
+    keyspace, columnFamily, hasWideRows, host, port, partitioner, columns, username, password, query, colSliceFrom, colSliceTo, readConsistencyLevel, writeConsistencyLevel, inputSplitSize, outputCompressionClass, outputCompressionChunkLength, Some(config))
 
 
   override def configuration = {
@@ -302,120 +352,125 @@ class Cql3CasBuilder(keyspace: String,
                      preparedSaveQuery: Option[String] = None,
                      readConsistencyLevel: Option[String] = None,
                      writeConsistencyLevel: Option[String] = None,
+                     inputSplitSize: Option[Long] = None,
                      outputCompressionClass: Option[String] = None,
                      outputCompressionChunkLength: Option[String] = None,
                      customConfig: Option[Configuration] = None
-                      ) extends CommonCasBuilder(keyspace, columnFamily, false, host, port, partitioner, columns, username, password, readConsistencyLevel, writeConsistencyLevel, outputCompressionClass, outputCompressionChunkLength, customConfig) {
+                      ) extends CommonCasBuilder(keyspace, columnFamily, false, host, port, partitioner, columns, username, password, readConsistencyLevel, writeConsistencyLevel, inputSplitSize, outputCompressionClass, outputCompressionChunkLength, customConfig) {
 
   /**
-   * Cassandra node for initial connection. Must be reachable from Spark Context.
-   * @param host
+   * Set Cassandra node for initial connection. Must be reachable from Spark Context.
+   * @param host The Cassandra hostname or IP Address
    */
   def onHost(host: String) = new Cql3CasBuilder(
-    keyspace, columnFamily, host, port, partitioner, columns, username, password, pageSize, whereClause, preparedSaveQuery, readConsistencyLevel, writeConsistencyLevel, outputCompressionClass, outputCompressionChunkLength, customConfig)
+    keyspace, columnFamily, host, port, partitioner, columns, username, password, pageSize, whereClause, preparedSaveQuery, readConsistencyLevel, writeConsistencyLevel, inputSplitSize, outputCompressionClass, outputCompressionChunkLength, customConfig)
 
   /**
-   * Port to use for initial cassandra connection
-   * @param port
+   * Set Port to use for initial cassandra connection
+   * @param port The Cassandra RPC port
    */
   def onPort(port: String) = new Cql3CasBuilder(
-    keyspace, columnFamily, host, port, partitioner, columns, username, password, pageSize, whereClause, preparedSaveQuery, readConsistencyLevel, writeConsistencyLevel, outputCompressionClass, outputCompressionChunkLength, customConfig)
+    keyspace, columnFamily, host, port, partitioner, columns, username, password, pageSize, whereClause, preparedSaveQuery, readConsistencyLevel, writeConsistencyLevel, inputSplitSize, outputCompressionClass, outputCompressionChunkLength, customConfig)
 
   /**
-   * The partitioner being used by this column family
-   * @param partitioner
+   * Set The partitioner being used by this column family
+   * @param partitioner The partitioner configured for your Cassandra Cluster
    */
   def patitionedUsing(partitioner: CasPartitioners.Value) = new Cql3CasBuilder(
-    keyspace, columnFamily, host, port, partitioner, columns, username, password, pageSize, whereClause, preparedSaveQuery, readConsistencyLevel, writeConsistencyLevel, outputCompressionClass, outputCompressionChunkLength, customConfig)
+    keyspace, columnFamily, host, port, partitioner, columns, username, password, pageSize, whereClause, preparedSaveQuery, readConsistencyLevel, writeConsistencyLevel, inputSplitSize, outputCompressionClass, outputCompressionChunkLength, customConfig)
 
   /**
-   * List of columns to be read
-   * @param columns
+   * Set List of columns to be read
+   * @param columns List of columns to select
    */
-  def columns(columns: List[String]) = new Cql3CasBuilder(
-    keyspace, columnFamily, host, port, partitioner, Some(columns), username, password, pageSize, whereClause, preparedSaveQuery, readConsistencyLevel, writeConsistencyLevel, outputCompressionClass, outputCompressionChunkLength, customConfig)
+  def columns(columns: List[String]): Cql3CasBuilder = new Cql3CasBuilder(
+    keyspace, columnFamily, host, port, partitioner, Some(columns), username, password, pageSize, whereClause, preparedSaveQuery, readConsistencyLevel, writeConsistencyLevel, inputSplitSize, outputCompressionClass, outputCompressionChunkLength, customConfig)
 
   /**
-   * The columns to be read from Cassandra
-   * @param columns
+   * Set The columns to be read from Cassandra
+   * @param columns The columns to select
    */
-  def columns(columns: String*) = new Cql3CasBuilder(
-    keyspace, columnFamily, host, port, partitioner, Some(columns.toList), username, password, pageSize, whereClause, preparedSaveQuery, readConsistencyLevel, writeConsistencyLevel, outputCompressionClass, outputCompressionChunkLength, customConfig)
+  def columns(columns: String*): Cql3CasBuilder = new Cql3CasBuilder(
+    keyspace, columnFamily, host, port, partitioner, Some(columns.toList), username, password, pageSize, whereClause, preparedSaveQuery, readConsistencyLevel, writeConsistencyLevel, inputSplitSize, outputCompressionClass, outputCompressionChunkLength, customConfig)
 
   /**
-   * User to authenticate with to Cassandra
-   * @param user
+   * Set User to authenticate with to Cassandra
+   * @param user The username to authenticate with Cassaandra
    */
   def authAs(user: String) = new Cql3CasBuilder(
-    keyspace, columnFamily, host, port, partitioner, columns, Some(user), password, pageSize, whereClause, preparedSaveQuery, readConsistencyLevel, writeConsistencyLevel, outputCompressionClass, outputCompressionChunkLength, customConfig)
+    keyspace, columnFamily, host, port, partitioner, columns, Some(user), password, pageSize, whereClause, preparedSaveQuery, readConsistencyLevel, writeConsistencyLevel, inputSplitSize, outputCompressionClass, outputCompressionChunkLength, customConfig)
 
   /**
-   * Password to use for authenticating the user with cassandra
-   * @param pass
+   * Set Password to use for authenticating the user with cassandra
+   * @param pass The password to authenticate with Cassaandra
    */
   def withPassword(pass: String) = new Cql3CasBuilder(
-    keyspace, columnFamily, host, port, partitioner, columns, username, Some(pass), pageSize, whereClause, preparedSaveQuery, readConsistencyLevel, writeConsistencyLevel, outputCompressionClass, outputCompressionChunkLength, customConfig)
+    keyspace, columnFamily, host, port, partitioner, columns, username, Some(pass), pageSize, whereClause, preparedSaveQuery, readConsistencyLevel, writeConsistencyLevel, inputSplitSize, outputCompressionClass, outputCompressionChunkLength, customConfig)
 
   /**
    * The number of rows to be fetched from cassandra in a single iterator. This should be  as large as possible but not larger.
-   * @param size
+   * @param size The number of CQL rows to fetch in one page
    */
   def setPageSize(size: Long) = new Cql3CasBuilder(
-    keyspace, columnFamily, host, port, partitioner, columns, username, password, Some(size), whereClause, preparedSaveQuery, readConsistencyLevel, writeConsistencyLevel, outputCompressionClass, outputCompressionChunkLength, customConfig)
+    keyspace, columnFamily, host, port, partitioner, columns, username, password, Some(size), whereClause, preparedSaveQuery, readConsistencyLevel, writeConsistencyLevel, inputSplitSize, outputCompressionClass, outputCompressionChunkLength, customConfig)
 
   /**
    * The CQL3 where predicate to use for filtering on secondary indexes in cassandra
-   * @param clause
+   * @param clause The where clause
    */
   def where(clause: String) = new Cql3CasBuilder(
-    keyspace, columnFamily, host, port, partitioner, columns, username, password, pageSize, Some(clause), preparedSaveQuery, readConsistencyLevel, writeConsistencyLevel, outputCompressionClass, outputCompressionChunkLength, customConfig)
+    keyspace, columnFamily, host, port, partitioner, columns, username, password, pageSize, Some(clause), preparedSaveQuery, readConsistencyLevel, writeConsistencyLevel, inputSplitSize, outputCompressionClass, outputCompressionChunkLength, customConfig)
 
   /**
    * The CQL3 Update query to be used while persisting data to Cassandra
-   * @param query
+   * @param query The update query
    */
   def saveWithQuery(query: String) = new Cql3CasBuilder(
-    keyspace, columnFamily, host, port, partitioner, columns, username, password, pageSize, whereClause, Some(query), readConsistencyLevel, writeConsistencyLevel, outputCompressionClass, outputCompressionChunkLength, customConfig)
+    keyspace, columnFamily, host, port, partitioner, columns, username, password, pageSize, whereClause, Some(query), readConsistencyLevel, writeConsistencyLevel, inputSplitSize, outputCompressionClass, outputCompressionChunkLength, customConfig)
 
   /**
    * Use this consistency level for read (do this only if you are sure that you need it, this may affect the performance)
-   * @param consistencyLevel
-   * @return
+   * @param consistencyLevel The consistency level to read at
    */
   def useReadConsistencyLevel(consistencyLevel: String) = new Cql3CasBuilder(
-    keyspace, columnFamily, host, port, partitioner, columns, username, password, pageSize, whereClause, preparedSaveQuery, Some(consistencyLevel), writeConsistencyLevel, outputCompressionClass, outputCompressionChunkLength, customConfig)
+    keyspace, columnFamily, host, port, partitioner, columns, username, password, pageSize, whereClause, preparedSaveQuery, Some(consistencyLevel), writeConsistencyLevel, inputSplitSize, outputCompressionClass, outputCompressionChunkLength, customConfig)
 
   /**
    * Use this consistency level for write (do this only if you are sure that you need it, this may affect the performance)
-   * @param consistencyLevel
+   * @param consistencyLevel The consistency level to write at
    * @return
    */
   def useWriteConsistencyLevel(consistencyLevel: String) = new Cql3CasBuilder(
-    keyspace, columnFamily, host, port, partitioner, columns, username, password, pageSize, whereClause, preparedSaveQuery, readConsistencyLevel, Some(consistencyLevel), outputCompressionClass, outputCompressionChunkLength, customConfig)
+    keyspace, columnFamily, host, port, partitioner, columns, username, password, pageSize, whereClause, preparedSaveQuery, readConsistencyLevel, Some(consistencyLevel), inputSplitSize, outputCompressionClass, outputCompressionChunkLength, customConfig)
 
   /**
    * Set the compression class to use to output from maps job
-   * @param compressionClass
-   * @return
+   * @param compressionClass Compression to use for output
    */
   def useOutputCompressionClass(compressionClass: String) = new Cql3CasBuilder(
-    keyspace, columnFamily, host, port, partitioner, columns, username, password, pageSize, whereClause, preparedSaveQuery, readConsistencyLevel, writeConsistencyLevel, Some(compressionClass), outputCompressionChunkLength, customConfig)
+    keyspace, columnFamily, host, port, partitioner, columns, username, password, pageSize, whereClause, preparedSaveQuery, readConsistencyLevel, writeConsistencyLevel, inputSplitSize, Some(compressionClass), outputCompressionChunkLength, customConfig)
 
   /**
-   * Set the size of data to compression in a chunk
-   * @param chunkLength
-   * @return
+   * Set the size of data to compress in a single chunk
+   * @param chunkLength The size of the compression chunk
    */
   def setOutputCompressionChunkLength(chunkLength: String) = new Cql3CasBuilder(
-    keyspace, columnFamily, host, port, partitioner, columns, username, password, pageSize, whereClause, preparedSaveQuery, readConsistencyLevel, writeConsistencyLevel, outputCompressionClass, Some(chunkLength), customConfig)
+    keyspace, columnFamily, host, port, partitioner, columns, username, password, pageSize, whereClause, preparedSaveQuery, readConsistencyLevel, writeConsistencyLevel, inputSplitSize, outputCompressionClass, Some(chunkLength), customConfig)
+
+  /**
+   * Set the number of keys to in split range that is processed per task
+   * @param splitSize
+   */
+  def inputSplitSize(splitSize: Int) = new Cql3CasBuilder(
+    keyspace, columnFamily, host, port, partitioner, columns, username, password, pageSize, whereClause, preparedSaveQuery, readConsistencyLevel, writeConsistencyLevel, Some(splitSize), outputCompressionClass, outputCompressionChunkLength, customConfig)
+
 
   /**
    * Apply the given hadoop configuration
-   * @param config
-   * @return
+   * @param config Custom hadoop configuration
    */
   def applyCustomConfig(config: Configuration) = new Cql3CasBuilder(
-    keyspace, columnFamily, host, port, partitioner, columns, username, password, pageSize, whereClause, preparedSaveQuery, readConsistencyLevel, writeConsistencyLevel, outputCompressionClass, outputCompressionChunkLength, Some(config))
+    keyspace, columnFamily, host, port, partitioner, columns, username, password, pageSize, whereClause, preparedSaveQuery, readConsistencyLevel, writeConsistencyLevel, inputSplitSize, outputCompressionClass, outputCompressionChunkLength, Some(config))
 
   override def configuration = {
     val job = configure
@@ -438,6 +493,134 @@ class Cql3CasBuilder(keyspace: String,
       case pql: String => CqlConfigHelper.setOutputCql(job.getConfiguration, pql)
     }
 
+
+    job.getConfiguration
+  }
+
+}
+
+class NativeCasBuilder(keyspace: String,
+                       columnFamily: String,
+                       inputCql: String,
+                       host: String = "localhost",
+                       port: String = "9160",
+                       nativePort: String = "9042",
+                       partitioner: CasPartitioners.Value = CasPartitioners.Murmur3Partitioner,
+                       username: Option[String] = None,
+                       password: Option[String] = None,
+                       pageSize: Option[Long] = None,
+                       preparedSaveQuery: Option[String] = None,
+                       writeConsistencyLevel: Option[String] = None,
+                       inputSplitSize: Option[Long] = None,
+                       outputCompressionClass: Option[String] = None,
+                       outputCompressionChunkLength: Option[String] = None,
+                       customConfig: Option[Configuration] = None
+                        ) extends CommonCasBuilder(keyspace, columnFamily, false, host, port, partitioner, None, username, password, None, writeConsistencyLevel, inputSplitSize, outputCompressionClass, outputCompressionChunkLength, customConfig) {
+
+  /**
+   * Cassandra node for initial connection. Must be reachable from Spark Context.
+   * @param host
+   */
+  def onHost(host: String) = new NativeCasBuilder(
+    keyspace, columnFamily, inputCql, host, port, nativePort, partitioner, username, password, pageSize, preparedSaveQuery, writeConsistencyLevel, inputSplitSize, outputCompressionClass, outputCompressionChunkLength, customConfig)
+
+  /**
+   * Port to use for initial cassandra connection
+   * @param port
+   */
+  def onPort(port: String) = new NativeCasBuilder(
+    keyspace, columnFamily, inputCql, host, port, nativePort, partitioner, username, password, pageSize, preparedSaveQuery, writeConsistencyLevel, inputSplitSize, outputCompressionClass, outputCompressionChunkLength, customConfig)
+
+  /**
+   * Set the native port the cassandra server is listening on
+   * @param nativePort
+   */
+  def onNativePort(nativePort: String) = new NativeCasBuilder(
+    keyspace, columnFamily, inputCql, host, port, nativePort, partitioner, username, password, pageSize, preparedSaveQuery, writeConsistencyLevel, inputSplitSize, outputCompressionClass, outputCompressionChunkLength, customConfig)
+
+  /**
+   * The partitioner being used by this column family
+   * @param partitioner
+   */
+  def patitionedUsing(partitioner: CasPartitioners.Value) = new NativeCasBuilder(
+    keyspace, columnFamily, inputCql, host, port, nativePort, partitioner, username, password, pageSize, preparedSaveQuery, writeConsistencyLevel, inputSplitSize, outputCompressionClass, outputCompressionChunkLength, customConfig)
+
+  /**
+   * User to authenticate with to Cassandra
+   * @param user
+   */
+  def authAs(user: String) = new NativeCasBuilder(
+    keyspace, columnFamily, inputCql, host, port, nativePort, partitioner, Some(user), password, pageSize, preparedSaveQuery, writeConsistencyLevel, inputSplitSize, outputCompressionClass, outputCompressionChunkLength, customConfig)
+
+  /**
+   * Password to use for authenticating the user with cassandra
+   * @param pass
+   */
+  def withPassword(pass: String) = new NativeCasBuilder(
+    keyspace, columnFamily, inputCql, host, port, nativePort, partitioner, username, Some(pass), pageSize, preparedSaveQuery, writeConsistencyLevel, inputSplitSize, outputCompressionClass, outputCompressionChunkLength, customConfig)
+
+  /**
+   * The number of rows to be fetched from cassandra in a single iterator. This should be  as large as possible but not larger.
+   * @param size
+   */
+  def setPageSize(size: Long) = new NativeCasBuilder(
+    keyspace, columnFamily, inputCql, host, port, nativePort, partitioner, username, password, Some(size), preparedSaveQuery, writeConsistencyLevel, inputSplitSize, outputCompressionClass, outputCompressionChunkLength, customConfig)
+
+  /**
+   * The CQL3 Update query to be used while persisting data to Cassandra
+   * @param query
+   */
+  def saveWithQuery(query: String) = new NativeCasBuilder(
+    keyspace, columnFamily, inputCql, host, port, nativePort, partitioner, username, password, pageSize, Some(query), writeConsistencyLevel, inputSplitSize, outputCompressionClass, outputCompressionChunkLength, customConfig)
+
+  /**
+   * Use this consistency level for write (do this only if you are sure that you need it, this may affect the performance)
+   * @param consistencyLevel
+   */
+  def useWriteConsistencyLevel(consistencyLevel: String) = new NativeCasBuilder(
+    keyspace, columnFamily, inputCql, host, port, nativePort, partitioner, username, password, pageSize, preparedSaveQuery, Some(consistencyLevel), inputSplitSize, outputCompressionClass, outputCompressionChunkLength, customConfig)
+
+  /**
+   * Set the compression class to use to output from maps job
+   * @param compressionClass
+   */
+  def useOutputCompressionClass(compressionClass: String) = new NativeCasBuilder(
+    keyspace, columnFamily, inputCql, host, port, nativePort, partitioner, username, password, pageSize, preparedSaveQuery, writeConsistencyLevel, inputSplitSize, Some(compressionClass), outputCompressionChunkLength, customConfig)
+
+  /**
+   * Set the size of data to compression in a chunk
+   * @param chunkLength
+   */
+  def setOutputCompressionChunkLength(chunkLength: String) = new NativeCasBuilder(
+    keyspace, columnFamily, inputCql, host, port, nativePort, partitioner, username, password, pageSize, preparedSaveQuery, writeConsistencyLevel, inputSplitSize, outputCompressionClass, Some(chunkLength), customConfig)
+
+  /**
+   * Set the number of keys to in split range that is processed per task
+   * @param splitSize
+   */
+  def inputSplitSize(splitSize: Int) = new NativeCasBuilder(
+    keyspace, columnFamily, inputCql, host, port, nativePort, partitioner, username, password, pageSize, preparedSaveQuery, writeConsistencyLevel, Some(splitSize), outputCompressionClass, outputCompressionChunkLength, customConfig)
+
+  /**
+   * Apply the given hadoop configuration
+   * @param config
+   */
+  def applyCustomConfig(config: Configuration) = new NativeCasBuilder(
+    keyspace, columnFamily, inputCql, host, port, nativePort, partitioner, username, password, pageSize, preparedSaveQuery, writeConsistencyLevel, inputSplitSize, outputCompressionClass, outputCompressionChunkLength, Some(config))
+
+  override def configuration = {
+    val job = configure()
+
+    CqlConfigHelper.setInputNativePort(job.getConfiguration, nativePort)
+    CqlConfigHelper.setInputCql(job.getConfiguration, inputCql)
+
+    pageSize map {
+      case ps: Long => CqlConfigHelper.setInputCQLPageRowSize(job.getConfiguration, ps.toString)
+    }
+
+    preparedSaveQuery map {
+      case pql: String => CqlConfigHelper.setOutputCql(job.getConfiguration, pql)
+    }
 
     job.getConfiguration
   }

@@ -308,7 +308,7 @@ final class BulkRecordWriter extends RecordWriter<ByteBuffer, List<Mutation>>
             TSocket socket = new TSocket(host, port);
             TTransport trans = new TFramedTransport(socket);
             trans.open();
-            TProtocol protocol = new TBinaryProtocol(trans);
+            TProtocol protocol = new org.apache.thrift.protocol.TBinaryProtocol(trans);
             return new Cassandra.Client(protocol);
         }
     }

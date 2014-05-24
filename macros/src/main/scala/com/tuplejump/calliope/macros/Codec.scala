@@ -1,27 +1,20 @@
 package com.tuplejump.calliope.macros
 
-import com.tuplejump.calliope.Types.CQLRowMap
-import scala.reflect.macros.Context
 import scala.language.experimental.macros
-import scala.annotation.StaticAnnotation
-
+import scala.reflect.macros.Context
 
 import scala.language.implicitConversions
-import java.io.InvalidObjectException
-import scala.collection.immutable.Stack
-import scala.util.Try
+import com.datastax.driver.core.Row
+import com.tuplejump.calliope.Types.CQLRowMap
 
-trait Mappable[T] {
-  def toCqlRow(t: T): CQLRowMap
+trait Mappable[T] extends Serializable {
+  implicit def toCqlRow(t: T): CQLRowMap
 
-  def fromCqlRow(map: CQLRowMap): T
+  implicit def fromNativeRow(row: Row): T
 }
 
-trait Generator {
-  def generate[T]: Mappable[T]
-}
 
-object MapperMacro {
+object Codec {
 
   def withLowercaseMapper[T] = macro _generateWithLowercaseMapper[T]
 
@@ -35,7 +28,7 @@ object MapperMacro {
 
 
   def _generateWithColumnList[T: c.WeakTypeTag](c: Context)(columns: c.Expr[String]*): c.Expr[Mappable[T]] = {
-    import c.universe._
+
     val tpe = c.weakTypeOf[T]
 
     ensureCaseClass(c)(tpe)
@@ -56,7 +49,6 @@ object MapperMacro {
   }
 
   def _generateWithColumnMapper[T: c.WeakTypeTag](c: Context)(columnMapper: c.Expr[(String, Int) => String]): c.Expr[Mappable[T]] = {
-    import c.universe._
     val tpe = c.weakTypeOf[T]
 
     ensureCaseClass(c)(tpe)
@@ -101,16 +93,19 @@ object MapperMacro {
   private def generate[T, C <: Context](c: C)(tpe: c.Type, params: List[c.universe.Symbol], mapperFunction: (String, Int) => String): c.Expr[Mappable[T]] = {
     import c.universe._
 
-    val companion = tpe.typeSymbol.companionSymbol
-    val (toMapParams, fromMapParams) = getMappers(c)(params, mapperFunction)
+    val companion: Symbol = tpe.typeSymbol.companionSymbol
+    val (toMapParams, fromNativeParams) = getMappers(c)(params, mapperFunction)
 
     c.Expr[Mappable[T]] { q"""
-      new Mappable[$tpe] {
-        import com.tuplejump.calliope.utils.RichByteBuffer._
-        import com.tuplejump.calliope.Types.CQLRowMap
+      import com.tuplejump.calliope.macros.Mappable
+      import com.tuplejump.calliope.utils.RichByteBuffer._
 
-        def toCqlRow(t: $tpe):CQLRowMap = Map(..$toMapParams)
-        def fromCqlRow(map: CQLRowMap) = $companion(..$fromMapParams)
+      new Mappable[$tpe] {
+        import com.tuplejump.calliope.Types.CQLRowMap
+        import com.datastax.driver.core.Row
+
+        implicit def toCqlRow(t: $tpe):CQLRowMap = Map(..$toMapParams)
+        implicit def fromNativeRow(row: Row) = $companion(..$fromNativeParams)
       }
     """
     }
@@ -137,16 +132,75 @@ object MapperMacro {
 
 
   private def getMappers(c: Context)(params: List[c.universe.Symbol], mapperFunction: (String, Int) => String) = {
+
     import c.universe._
-
     params.zipWithIndex.map {
-      case (field: c.universe.Symbol, index: Int) =>
+      case (field: Symbol, index: Int) =>
         val colName = mapperFunction(field.name.toString, index)
-        val name = field.name.asInstanceOf[c.universe.TermName]
+        val name = field.name.asInstanceOf[TermName]
+        val fieldType: Type = field.asTerm.typeSignature
+        val fieldGetter = newTermName(getFieldGetter(c)(fieldType, colName))
 
-        (q"$colName -> t.$name", q"map($colName)")
+        val toMap = q"$colName -> t.$name"
+        //val fromMap= q"map($colName)"
+
+        val fromRow = if (fieldType.takesTypeArgs) {
+          val fieldTypeArgs = fieldType match {
+            case TypeRef(_, _, args) => args
+          }
+          if (fieldTypeArgs.size == 1) {
+            val typeArgClass = fieldTypeArgs.head.typeSymbol.asClass
+            q"row.$fieldGetter($colName, $typeArgClass)"
+          } else {
+            val typeArgClass1 = fieldTypeArgs(0).typeSymbol.asClass
+            val typeArgClass2 = fieldTypeArgs(1).typeSymbol.asClass
+            q"row.$fieldGetter($colName, $typeArgClass1, $typeArgClass2)"
+          }
+        } else {
+          q"row.$fieldGetter($colName)"
+        }
+
+        (toMap, fromRow)
 
     }.unzip
+  }
+
+  private def getFieldGetter(c: Context)(ft: c.type#Type, colName: String): String = {
+    ft.typeSymbol.name.toString match {
+      case "Boolean" =>
+        "getBool"
+      case "Int" | "Integer" =>
+        "getInt"
+      case "Long" =>
+        "getLong"
+      case "Date" =>
+        "getDate"
+      case "Float" =>
+        "getFloat"
+      case "Double" =>
+        "getDouble"
+      case "ByteBuffer" =>
+        "getBytes"
+      case "String" =>
+        "getString"
+      case "BigInteger" =>
+        "getVarint"
+      case "BigDecimal" =>
+        "getDecimal"
+      case "UUID" =>
+        "getUUID"
+      case "InetAddress" =>
+        "getInet"
+      case "List" =>
+        "getList"
+      case "Set" =>
+        "getSet"
+      case "Map" =>
+        "getMap"
+      case x =>
+        println(x)
+        "getBytesUnsafe"
+    }
   }
 
   implicit def ss2sis(ss: String => String): (String, Int) => String = {
@@ -156,6 +210,4 @@ object MapperMacro {
   implicit def is2sis(is: String => String): (String, Int) => String = {
     (s: String, i: Int) => is(s)
   }
-
-
 }

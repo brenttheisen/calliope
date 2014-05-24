@@ -506,7 +506,7 @@ public class CqlPagingRecordReader extends RecordReader<Map<String, ByteBuffer>,
         private Pair<Integer, String> whereClause(List<BoundColumn> column, int position)
         {
             if (position == column.size() - 1 || column.get(position + 1).value == null)
-                return Pair.create(position + 2, String.format(" AND %s > ? ", quote(column.get(position).name)));
+                return Pair.create(position + 2, String.format(" AND %s %s ? ", quote(column.get(position).name), column.get(position).reversed ? " < " : " >")); 
 
             Pair<Integer, String> clause = whereClause(column, position + 1);
             return Pair.create(clause.left, String.format(" AND %s = ? %s", quote(column.get(position).name), clause.right));
@@ -761,6 +761,7 @@ public class CqlPagingRecordReader extends RecordReader<Map<String, ByteBuffer>,
         final String name;
         ByteBuffer value;
         AbstractType<?> validator;
+        boolean reversed = false;
 
         public BoundColumn(String name)
         {

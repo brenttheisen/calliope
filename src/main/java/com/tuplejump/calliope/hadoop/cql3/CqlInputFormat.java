@@ -17,7 +17,10 @@
  */
 package com.tuplejump.calliope.hadoop.cql3;
 
-import com.datastax.driver.core.Row;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.Map;
+
 import com.tuplejump.calliope.hadoop.AbstractColumnFamilyInputFormat;
 import org.apache.hadoop.mapred.InputSplit;
 import org.apache.hadoop.mapred.JobConf;
@@ -26,33 +29,37 @@ import org.apache.hadoop.mapred.Reporter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.TaskAttemptID;
 
-import java.io.IOException;
+import com.datastax.driver.core.Row;
 
 /**
  * Hadoop InputFormat allowing map/reduce against Cassandra rows within one ColumnFamily.
- * <p/>
+ *
  * At minimum, you need to set the KS and CF in your Hadoop job Configuration.
  * The ConfigHelper class is provided to make this
  * simple:
  * ConfigHelper.setInputColumnFamily
- * <p/>
+ *
  * You can also configure the number of rows per InputSplit with
  * ConfigHelper.setInputSplitSize. The default split size is 64k rows.
- * <p/>
+ *
  * the number of CQL rows per page
  * CQLConfigHelper.setInputCQLPageRowSize. The default page row size is 1000. You
  * should set it to "as big as possible, but no bigger." It set the LIMIT for the CQL
  * query, so you need set it big enough to minimize the network overhead, and also
  * not too big to avoid out of memory issue.
- * <p/>
+ *   
  * other native protocol connection parameters in CqlConfigHelper
  */
-public class CqlInputFormat extends AbstractColumnFamilyInputFormat<Long, Row> {
+public class CqlInputFormat extends AbstractColumnFamilyInputFormat<Long, Row>
+{
     public RecordReader<Long, Row> getRecordReader(InputSplit split, JobConf jobConf, final Reporter reporter)
-            throws IOException {
-        TaskAttemptContext tac = new TaskAttemptContext(jobConf, TaskAttemptID.forName(jobConf.get(MAPRED_TASK_ID))) {
+            throws IOException
+    {
+        TaskAttemptContext tac = new TaskAttemptContext(jobConf, TaskAttemptID.forName(jobConf.get(MAPRED_TASK_ID)))
+        {
             @Override
-            public void progress() {
+            public void progress()
+            {
                 reporter.progress();
             }
         };
@@ -65,7 +72,8 @@ public class CqlInputFormat extends AbstractColumnFamilyInputFormat<Long, Row> {
     @Override
     public org.apache.hadoop.mapreduce.RecordReader<Long, Row> createRecordReader(
             org.apache.hadoop.mapreduce.InputSplit arg0, TaskAttemptContext arg1) throws IOException,
-            InterruptedException {
+            InterruptedException
+    {
         return new CqlRecordReader();
     }
 

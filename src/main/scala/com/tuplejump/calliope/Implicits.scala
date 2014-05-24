@@ -23,34 +23,9 @@ import com.tuplejump.calliope.thrift.ThriftCassandraSparkContext
 import com.tuplejump.calliope.cql3.Cql3CassandraSparkContext
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
-import java.nio.ByteBuffer
 
 import scala.language.implicitConversions
-import com.tuplejump.calliope.macros.{Mappable, MapperMacro}
-
-trait Generator {
-  def generate[T]: Mappable[T]
-}
-
-
-/* object Codec {
-
-  import scala.language.experimental.macros
-
-  def useLowerCaseMapper = {
-    def toLowerCase(word: String) = word.toLowerCase
-
-    def generate[T] = macro MapperMacro._generateMapper[T]
-  }
-
-  object useSnakeCaseMapper {
-    private def toSnakeCase(word: String) = word.replaceAll("([A-Z]+)([A-Z][a-z])", "$1_$2").replaceAll("([a-z\\d])([A-Z])", "$1_$2").toLowerCase
-
-  }
-
-  private def toSnakeCase(word: String) = word.replaceAll("([A-Z]+)([A-Z][a-z])", "$1_$2").replaceAll("([a-z\\d])([A-Z])", "$1_$2").toLowerCase
-
-} */
+import com.tuplejump.calliope.native.NativeCassandraSparkContext
 
 object Implicits {
 
@@ -60,4 +35,6 @@ object Implicits {
   implicit def SparkContext2ThriftCasSparkContext(sc: SparkContext) = new ThriftCassandraSparkContext(sc)
 
   implicit def SparkContext2Cql3CasSparkContext(sc: SparkContext) = new Cql3CassandraSparkContext(sc)
+
+  implicit def SparkContext2NativeCasSparkContext(sc: SparkContext) = new NativeCassandraSparkContext(sc)
 }

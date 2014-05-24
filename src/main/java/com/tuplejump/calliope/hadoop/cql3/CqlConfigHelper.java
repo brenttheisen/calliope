@@ -20,6 +20,7 @@ package com.tuplejump.calliope.hadoop.cql3;
 *
 */
 
+
 import com.datastax.driver.core.AuthProvider;
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.policies.LoadBalancingPolicy;
@@ -28,6 +29,7 @@ import com.google.common.collect.Iterators;
 import com.google.common.collect.Sets;
 import com.tuplejump.calliope.hadoop.ConfigHelper;
 import org.apache.cassandra.io.util.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 
 import javax.net.ssl.KeyManagerFactory;
@@ -48,6 +50,8 @@ public class CqlConfigHelper {
     private static final String INPUT_CQL_WHERE_CLAUSE_CONFIG = "cassandra.input.where.clause";
     private static final String INPUT_CQL = "cassandra.input.cql";
 
+    private static final String USERNAME = "cassandra.username";
+    private static final String PASSWORD = "cassandra.password";
     private static final String INPUT_NATIVE_PORT = "cassandra.input.native.port";
     private static final String INPUT_NATIVE_CORE_CONNECTIONS_PER_HOST = "cassandra.input.native.core.connections.per.host";
     private static final String INPUT_NATIVE_MAX_CONNECTIONS_PER_HOST = "cassandra.input.native.max.connections.per.host";
@@ -128,6 +132,14 @@ public class CqlConfigHelper {
             return;
 
         conf.set(INPUT_CQL, cql);
+    }
+
+    public static void setUserNameAndPassword(Configuration conf, String username, String password) {
+        if (StringUtils.isNotBlank(username)) {
+            conf.set(INPUT_NATIVE_AUTH_PROVIDER, PlainTextAuthProvider.class.getName());
+            conf.set(USERNAME, username);
+            conf.set(PASSWORD, password);
+        }
     }
 
     public static Optional<Integer> getInputCoreConnections(Configuration conf) {
@@ -297,24 +309,24 @@ public class CqlConfigHelper {
         conf.set(INPUT_NATIVE_AUTH_PROVIDER, authProvider);
     }
 
-    public static void setInputNativeSSLTruststorePath(Configuration conf, String authProvider) {
-        conf.set(INPUT_NATIVE_SSL_TRUST_STORE_PATH, authProvider);
+    public static void setInputNativeSSLTruststorePath(Configuration conf, String path) {
+        conf.set(INPUT_NATIVE_SSL_TRUST_STORE_PATH, path);
     }
 
-    public static void setInputNativeSSLKeystorePath(Configuration conf, String authProvider) {
-        conf.set(INPUT_NATIVE_SSL_KEY_STORE_PATH, authProvider);
+    public static void setInputNativeSSLKeystorePath(Configuration conf, String path) {
+        conf.set(INPUT_NATIVE_SSL_KEY_STORE_PATH, path);
     }
 
-    public static void setInputNativeSSLKeystorePassword(Configuration conf, String authProvider) {
-        conf.set(INPUT_NATIVE_SSL_KEY_STORE_PASSWARD, authProvider);
+    public static void setInputNativeSSLKeystorePassword(Configuration conf, String pass) {
+        conf.set(INPUT_NATIVE_SSL_KEY_STORE_PASSWARD, pass);
     }
 
-    public static void setInputNativeSSLTruststorePassword(Configuration conf, String authProvider) {
-        conf.set(INPUT_NATIVE_SSL_TRUST_STORE_PASSWARD, authProvider);
+    public static void setInputNativeSSLTruststorePassword(Configuration conf, String pass) {
+        conf.set(INPUT_NATIVE_SSL_TRUST_STORE_PASSWARD, pass);
     }
 
-    public static void setInputNativeSSLCipherSuites(Configuration conf, String authProvider) {
-        conf.set(INPUT_NATIVE_SSL_CIPHER_SUITES, authProvider);
+    public static void setInputNativeSSLCipherSuites(Configuration conf, String suites) {
+        conf.set(INPUT_NATIVE_SSL_CIPHER_SUITES, suites);
     }
 
     public static void setInputNativeReuseAddress(Configuration conf, String reuseAddress) {
@@ -431,7 +443,7 @@ public class CqlConfigHelper {
 
             @Override
             public HostDistance distance(Host host) {
-                if (host.getAddress().getHostName().equals(stickHost))
+                if (host.getAddress().getHostAddress().equals(stickHost) || host.getAddress().getHostName().equals(stickHost))
                     return HostDistance.LOCAL;
                 else
                     return HostDistance.REMOTE;
@@ -440,7 +452,7 @@ public class CqlConfigHelper {
             @Override
             public void init(Cluster cluster, Collection<Host> hosts) {
                 for (Host host : hosts) {
-                    if (host.getAddress().getHostName().equals(stickHost)) {
+                    if (host.getAddress().getHostAddress().equals(stickHost) || host.getAddress().getHostName().equals(stickHost)) {
                         origHost = host;
                         break;
                     }
@@ -463,7 +475,7 @@ public class CqlConfigHelper {
         if (!authProvider.isPresent())
             return Optional.absent();
 
-        return Optional.of(getClientAuthProvider(authProvider.get()));
+        return Optional.of(getClientAuthProvider(authProvider.get(), conf));
     }
 
     private static Optional<SSLOptions> getSSLOptions(Configuration conf) {
@@ -510,9 +522,17 @@ public class CqlConfigHelper {
         return Optional.of(setting);
     }
 
-    private static AuthProvider getClientAuthProvider(String factoryClassName) {
+    private static AuthProvider getClientAuthProvider(String factoryClassName, Configuration conf) {
         try {
-            return (AuthProvider) Class.forName(factoryClassName).newInstance();
+            Class<?> c = Class.forName(factoryClassName);
+            if (PlainTextAuthProvider.class.equals(c)) {
+                String username = getStringSetting(USERNAME, conf).or("");
+                String password = getStringSetting(PASSWORD, conf).or("");
+                return (AuthProvider) c.getConstructor(String.class, String.class)
+                        .newInstance(username, password);
+            } else {
+                return (AuthProvider) c.newInstance();
+            }
         } catch (Exception e) {
             throw new RuntimeException("Failed to instantiate auth provider:" + factoryClassName, e);
         }

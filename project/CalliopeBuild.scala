@@ -1,12 +1,11 @@
 import sbt._
 import sbt.Keys._
-import scala.xml.NodeSeq
 
 object CalliopeBuild extends Build {
 
   lazy val USE_CASV2 = System.getenv("USE_CASV2") != null && System.getenv("USE_CASV2").equalsIgnoreCase("true")
 
-  lazy val VERSION = "0.9.1-U1-C2-EA"
+  lazy val VERSION = "0.9.2-EA"
 
   lazy val CAS_VERSION = "2.0.7"
 
@@ -14,20 +13,20 @@ object CalliopeBuild extends Build {
 
   lazy val SCALA_VERSION = "2.10.3"
 
-  lazy val DS_DRIVER_VERSION = "2.0.1"
+  lazy val DS_DRIVER_VERSION = "2.0.2"
 
   lazy val PARADISE_VERSION = "2.0.0"
 
   lazy val calliope = {
     val dependencies = Seq(
-      "org.apache.cassandra" % "cassandra-all" % CAS_VERSION intransitive(),
-      "org.apache.cassandra" % "cassandra-thrift" % CAS_VERSION intransitive(),
+      "org.apache.cassandra" % "cassandra-all" % CAS_VERSION % "provided" intransitive(),
+      "org.apache.cassandra" % "cassandra-thrift" % CAS_VERSION % "provided" intransitive(),
       "org.apache.thrift" % "libthrift" % THRIFT_VERSION exclude("org.slf4j", "slf4j-api") exclude("javax.servlet", "servlet-api"),
-      "com.datastax.cassandra" % "cassandra-driver-core" % DS_DRIVER_VERSION,
+      "com.datastax.cassandra" % "cassandra-driver-core" % DS_DRIVER_VERSION intransitive(),
       "org.slf4j" % "slf4j-jdk14" % "1.7.5",
-      "org.apache.spark" %% "spark-core" % "0.9.1" exclude("org.apache.hadoop", "hadoop-core"),
+      "org.apache.spark" %% "spark-core" % "0.9.1" % "provided" exclude("org.apache.hadoop", "hadoop-core"),
       "org.apache.spark" %% "spark-streaming" % "0.9.1" % "provided",
-      "org.apache.hadoop" % "hadoop-core" % "1.0.3",
+      "org.apache.hadoop" % "hadoop-core" % "1.0.3" % "provided",
       "org.apache.commons" % "commons-lang3" % "3.1",
       "org.scalatest" %% "scalatest" % "1.9.1" % "test"
     )
@@ -65,8 +64,6 @@ object CalliopeBuild extends Build {
       },
 
       libraryDependencies ++= dependencies,
-
-      libraryDependencies <++= (scalaVersion)(sparkDependency),
 
       parallelExecution in Test := false,
 
@@ -111,11 +108,19 @@ object CalliopeBuild extends Build {
 
   lazy val macros = Project(
     id = "calliope-macros",
+
     base = file("macros"),
+
     settings = Project.defaultSettings ++ Seq(
+      version := VERSION,
+
       addCompilerPlugin("org.scalamacros" % "paradise" % PARADISE_VERSION cross CrossVersion.full),
-      libraryDependencies ++= Seq("org.scalamacros" %% "quasiquotes" % PARADISE_VERSION),
+
+      libraryDependencies ++= Seq("org.scalamacros" %% "quasiquotes" % PARADISE_VERSION,
+        "com.datastax.cassandra" % "cassandra-driver-core" % DS_DRIVER_VERSION intransitive()),
+
       libraryDependencies <+= (scalaVersion)("org.scala-lang" % "scala-reflect" % _),
+
       scalacOptions := "-Ymacro-debug-lite" :: Nil
     )
   )
