@@ -11,6 +11,7 @@ import com.tuplejump.calliope.Implicits._
 import com.tuplejump.calliope.Types._
 
 import scala.language.implicitConversions
+import com.tuplejump.calliope.macros.CqlRowWriter
 
 
 class CassandraRDDFunctionsSpec extends FunSpec with BeforeAndAfterAll with ShouldMatchers with MustMatchers {
@@ -82,7 +83,9 @@ class CassandraRDDFunctionsSpec extends FunSpec with BeforeAndAfterAll with Shou
 
     it("should allow persistence using Simple API via CQL") {
       import Cql3CRDDTransformers._
-      import CRDDFuncTransformers.EmployeeToMap
+
+      val transformer = CqlRowWriter.columnListMapper[Employee]("deptid", "empid", "first_name", "last_name")
+      import transformer._
 
       val casrdd = sc.cql3Cassandra[Employee](CQL_TEST_KEYSPACE, CQL_TEST_OUTPUT_COLUMN_FAMILY)
       val initCount = casrdd.collect().length
@@ -96,7 +99,7 @@ class CassandraRDDFunctionsSpec extends FunSpec with BeforeAndAfterAll with Shou
 
       val rdd = sc.parallelize(data)
 
-      rdd.simpleSavetoCas(CQL_TEST_KEYSPACE,
+      rdd.saveToCas(CQL_TEST_KEYSPACE,
         CQL_TEST_OUTPUT_COLUMN_FAMILY,
         List("deptid", "empid"), List("first_name", "last_name"))
 

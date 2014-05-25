@@ -5,29 +5,30 @@ import scala.reflect.macros.Context
 
 import scala.language.implicitConversions
 import com.datastax.driver.core.Row
-import com.tuplejump.calliope.Types.CQLRowMap
 
-trait Mappable[T] extends Serializable {
-  implicit def toCqlRow(t: T): CQLRowMap
-
+trait NativeRowReaderBase[T] extends Serializable {
   implicit def fromNativeRow(row: Row): T
 }
 
 
-object Codec {
+object NativeRowReader {
 
-  def withLowercaseMapper[T] = macro _generateWithLowercaseMapper[T]
+  import NativeDecodeMacro._
 
-  def withSnakecaseMapper[T] = macro _generateWithSnakecaseMapper[T]
+  def lowercaseMapper[T] = macro _generateWithLowercaseMapper[T]
 
-  def withColumns[T](columns: String*): Mappable[T] = macro _generateWithColumnList[T]
+  def snakecaseMapper[T] = macro _generateWithSnakecaseMapper[T]
 
-  def withColumnMap[T](columnMap: Map[String, String]) = macro _generateWithColumnMap[T]
+  def columnListMapper[T](columns: String*) = macro _generateWithColumnList[T]
 
-  def withMapper[T](columnMapper: (String, Int) => String) = macro _generateWithColumnMapper[T]
+  def columnMapper[T](columnMap: Map[String, String]) = macro _generateWithColumnMap[T]
 
+  def functionMapper[T](columnMapper: (String, Int) => String) = macro _generateWithColumnMapper[T]
+}
 
-  def _generateWithColumnList[T: c.WeakTypeTag](c: Context)(columns: c.Expr[String]*): c.Expr[Mappable[T]] = {
+object NativeDecodeMacro {
+
+  def _generateWithColumnList[T: c.WeakTypeTag](c: Context)(columns: c.Expr[String]*): c.Expr[NativeRowReaderBase[T]] = {
 
     val tpe = c.weakTypeOf[T]
 
@@ -48,7 +49,7 @@ object Codec {
     generate[T, c.type](c)(tpe, params, colMapper)
   }
 
-  def _generateWithColumnMapper[T: c.WeakTypeTag](c: Context)(columnMapper: c.Expr[(String, Int) => String]): c.Expr[Mappable[T]] = {
+  def _generateWithColumnMapper[T: c.WeakTypeTag](c: Context)(columnMapper: c.Expr[(String, Int) => String]): c.Expr[NativeRowReaderBase[T]] = {
     val tpe = c.weakTypeOf[T]
 
     ensureCaseClass(c)(tpe)
@@ -60,7 +61,7 @@ object Codec {
     generate[T, c.type](c)(tpe, params, colMapper)
   }
 
-  def _generateWithColumnMap[T: c.WeakTypeTag](c: Context)(columnMap: c.Expr[Map[String, String]]): c.Expr[Mappable[T]] = {
+  def _generateWithColumnMap[T: c.WeakTypeTag](c: Context)(columnMap: c.Expr[Map[String, String]]): c.Expr[NativeRowReaderBase[T]] = {
     import c.universe._
     val colMap: Map[String, String] = c.eval(c.Expr[Map[String, String]](c.resetAllAttrs(columnMap.tree)))
     val colMapper = reify {
@@ -70,7 +71,7 @@ object Codec {
     _generateWithColumnMapper[T](c)(colMapper)
   }
 
-  def _generateWithLowercaseMapper[T: c.WeakTypeTag](c: Context): c.Expr[Mappable[T]] = {
+  def _generateWithLowercaseMapper[T: c.WeakTypeTag](c: Context): c.Expr[NativeRowReaderBase[T]] = {
     import c.universe._
 
     val colMapper = reify {
@@ -79,7 +80,7 @@ object Codec {
     _generateWithColumnMapper[T](c)(colMapper)
   }
 
-  def _generateWithSnakecaseMapper[T: c.WeakTypeTag](c: Context): c.Expr[Mappable[T]] = {
+  def _generateWithSnakecaseMapper[T: c.WeakTypeTag](c: Context): c.Expr[NativeRowReaderBase[T]] = {
     import c.universe._
 
 
@@ -90,21 +91,19 @@ object Codec {
     _generateWithColumnMapper[T](c)(colMapper)
   }
 
-  private def generate[T, C <: Context](c: C)(tpe: c.Type, params: List[c.universe.Symbol], mapperFunction: (String, Int) => String): c.Expr[Mappable[T]] = {
+  private def generate[T, C <: Context](c: C)(tpe: c.Type, params: List[c.universe.Symbol], mapperFunction: (String, Int) => String): c.Expr[NativeRowReaderBase[T]] = {
     import c.universe._
 
     val companion: Symbol = tpe.typeSymbol.companionSymbol
-    val (toMapParams, fromNativeParams) = getMappers(c)(params, mapperFunction)
+    val fromNativeParams = getMappers(c)(params, mapperFunction)
 
-    c.Expr[Mappable[T]] { q"""
-      import com.tuplejump.calliope.macros.Mappable
-      import com.tuplejump.calliope.utils.RichByteBuffer._
+    c.Expr[NativeRowReaderBase[T]] {
+      q"""
+      import com.tuplejump.calliope.macros.NativeRowReaderBase
 
-      new Mappable[$tpe] {
-        import com.tuplejump.calliope.Types.CQLRowMap
+      new NativeRowReaderBase[$tpe] {
         import com.datastax.driver.core.Row
 
-        implicit def toCqlRow(t: $tpe):CQLRowMap = Map(..$toMapParams)
         implicit def fromNativeRow(row: Row) = $companion(..$fromNativeParams)
       }
     """
@@ -137,12 +136,8 @@ object Codec {
     params.zipWithIndex.map {
       case (field: Symbol, index: Int) =>
         val colName = mapperFunction(field.name.toString, index)
-        val name = field.name.asInstanceOf[TermName]
         val fieldType: Type = field.asTerm.typeSignature
         val fieldGetter = newTermName(getFieldGetter(c)(fieldType, colName))
-
-        val toMap = q"$colName -> t.$name"
-        //val fromMap= q"map($colName)"
 
         val fromRow = if (fieldType.takesTypeArgs) {
           val fieldTypeArgs = fieldType match {
@@ -160,9 +155,8 @@ object Codec {
           q"row.$fieldGetter($colName)"
         }
 
-        (toMap, fromRow)
-
-    }.unzip
+        fromRow
+    }
   }
 
   private def getFieldGetter(c: Context)(ft: c.type#Type, colName: String): String = {

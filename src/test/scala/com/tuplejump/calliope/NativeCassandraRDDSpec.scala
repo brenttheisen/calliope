@@ -5,7 +5,7 @@ import org.scalatest.matchers.{MustMatchers, ShouldMatchers}
 import org.apache.spark.SparkContext
 
 import com.tuplejump.calliope.Implicits._
-import com.tuplejump.calliope.macros.Codec
+import com.tuplejump.calliope.macros.NativeRowReader
 import com.datastax.driver.core.Row
 import scala.language.implicitConversions
 
@@ -27,7 +27,7 @@ class NativeCassandraRDDSpec extends FunSpec with BeforeAndAfterAll with ShouldM
 
   describe("Native Cassandra RDD") {
     it("should be able to build and process RDD[U]") {
-      val transformer = Codec.withColumns[NativeEmployee]("deptid", "empid", "first_name", "last_name")
+      val transformer = NativeRowReader.columnListMapper[NativeEmployee]("deptid", "empid", "first_name", "last_name")
 
       import transformer._
 
@@ -66,7 +66,7 @@ class NativeCassandraRDDSpec extends FunSpec with BeforeAndAfterAll with ShouldM
     }
 
     it("should be able to use secodary indexes") {
-      val transformer = Codec.withColumns[NativeEmployee]("deptid", "empid", "first_name", "last_name")
+      val transformer = NativeRowReader.columnListMapper[NativeEmployee]("deptid", "empid", "first_name", "last_name")
 
       import transformer._
 
@@ -95,20 +95,5 @@ class NativeCassandraRDDSpec extends FunSpec with BeforeAndAfterAll with ShouldM
     sc.stop()
   }
 }
-
-/* object Cql3CRDDTransformers {
-
-  import com.tuplejump.calliope.utils.RichByteBuffer._
-
-  implicit def row2String(key: ThriftRowKey, row: ThriftRowMap): List[String] = {
-    row.keys.toList
-  }
-
-  implicit def cql3Row2Emp(keys: CQLRowKeyMap, values: CQLRowMap): Employee =
-    Employee(keys.get("deptid").get, keys.get("empid").get, values.get("first_name").get, values.get("last_name").get)
-
-  implicit def cql3Row2EmpName(keys: CQLRowKeyMap, values: CQLRowMap): (String, String) =
-    (values.get("first_name").get, values.get("last_name").get)
-} */
 
 case class NativeEmployee(deptId: Int, empId: Int, firstName: String, lastName: String)

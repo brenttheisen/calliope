@@ -5,7 +5,7 @@ object CalliopeBuild extends Build {
 
   lazy val USE_CASV2 = System.getenv("USE_CASV2") != null && System.getenv("USE_CASV2").equalsIgnoreCase("true")
 
-  lazy val VERSION = "0.9.2-EA"
+  lazy val VERSION = "0.9.3-EA-SNAPSHOT"
 
   lazy val CAS_VERSION = "2.0.7"
 

@@ -212,7 +212,7 @@ class CassandraRDDFunctions[U](self: RDD[U])
   @implicitNotFound(
     "No transformer found for U => CQLRowKeyMap. You must have implicit methods for these."
   )
-  def simpleSavetoCas(keyspace: String, columnFamily: String, keyCols: List[CQLKeyColumnName], valueCols: List[CQLColumnName])
+  def saveToCas(keyspace: String, columnFamily: String, keyCols: List[CQLKeyColumnName], valueCols: List[CQLColumnName])
                      (implicit marshaller: U => CQLRowMap) {
     import com.tuplejump.calliope.Implicits._
     val valPart = valueCols.map(_ + " = ?").mkString(",")

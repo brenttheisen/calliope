@@ -2,23 +2,19 @@ package com.tuplejump.calliope
 
 import org.scalatest.{BeforeAndAfterAll, FunSpec}
 import org.scalatest.matchers.{MustMatchers, ShouldMatchers}
-import java.nio.ByteBuffer
-import com.tuplejump.calliope.utils.RichByteBuffer
 import org.apache.spark.SparkContext
 
 import com.tuplejump.calliope.Implicits._
 import com.tuplejump.calliope.Types.{CQLRowMap, CQLRowKeyMap, ThriftRowMap, ThriftRowKey}
-import org.apache.cassandra.thrift.CqlRow
+import com.tuplejump.calliope.macros.CqlRowReader
 
+import scala.language.implicitConversions
 /**
  * To run this test you need a Cassandra cluster up and running
  * and run the data-script.cli in it to create the data.
  *
  */
 class Cql3CassandraRDDSpec extends FunSpec with BeforeAndAfterAll with ShouldMatchers with MustMatchers {
-
-
-  import Cql3CRDDTransformers._
 
   val CASSANDRA_NODE_COUNT = 3
   val CASSANDRA_NODE_LOCATIONS = List("127.0.0.1", "127.0.0.2", "127.0.0.3")
@@ -33,6 +29,10 @@ class Cql3CassandraRDDSpec extends FunSpec with BeforeAndAfterAll with ShouldMat
   describe("Cql3 Cassandra RDD") {
     it("should be able to build and process RDD[U]") {
 
+      val transformer = CqlRowReader.columnListMapper[Employee]("deptid", "empid", "first_name", "last_name")
+
+      import transformer._
+
       val cas = CasBuilder.cql3.withColumnFamily("cql3_test", "emp_read_test")
 
       val casrdd = sc.cql3Cassandra[Employee](cas)
@@ -46,6 +46,8 @@ class Cql3CassandraRDDSpec extends FunSpec with BeforeAndAfterAll with ShouldMat
 
 
     it("should be able to query selected columns") {
+      import Cql3CRDDTransformers._
+
       val cas = CasBuilder.cql3.withColumnFamily("cql3_test", "emp_read_test").columns("first_name", "last_name")
 
       val casrdd = sc.cql3Cassandra[(String, String)](cas)
@@ -59,6 +61,8 @@ class Cql3CassandraRDDSpec extends FunSpec with BeforeAndAfterAll with ShouldMat
     }
 
     it("should be able to use secodary indexes") {
+      import Cql3CRDDTransformers._
+
       val cas = CasBuilder.cql3.withColumnFamily("cql3_test", "emp_read_test").where("first_name = 'john'")
 
       val casrdd = sc.cql3Cassandra[Employee](cas)
