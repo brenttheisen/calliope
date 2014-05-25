@@ -28,6 +28,7 @@ object CalliopeBuild extends Build {
       "org.apache.spark" %% "spark-streaming" % "0.9.1" % "provided",
       "org.apache.hadoop" % "hadoop-core" % "1.0.3" % "provided",
       "org.apache.commons" % "commons-lang3" % "3.1",
+      "com.github.nscala-time" %% "nscala-time" % "1.0.0",
       "org.scalatest" %% "scalatest" % "1.9.1" % "test"
     )
 

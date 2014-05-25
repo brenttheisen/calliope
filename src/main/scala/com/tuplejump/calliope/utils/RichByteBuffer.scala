@@ -28,6 +28,7 @@ import java.net.InetAddress
 import com.datastax.driver.core.DataType
 import java.math.BigInteger
 import scala.collection.JavaConverters._
+import org.joda.time.DateTime
 
 
 object RichByteBuffer {
@@ -46,6 +47,8 @@ object RichByteBuffer {
   implicit def ByteBuffer2Boolean(buffer: ByteBuffer): Boolean = buffer.get() == 1
 
   implicit def ByteBuffer2Date(buffer: ByteBuffer): Date = new Date(ByteBufferUtil.toLong(buffer))
+
+  implicit def ByteBuffer2DateTime(buffer: ByteBuffer): DateTime = new DateTime(ByteBufferUtil.toLong(buffer))
 
   implicit def ByteBuffer2UUID(buffer: ByteBuffer): UUID = new UUID(buffer.getLong(buffer.position()), buffer.getLong(buffer.position() + 8))
 
@@ -104,6 +107,8 @@ object RichByteBuffer {
   implicit def Boolean2ByteBuffer(bool: Boolean): ByteBuffer = if (bool) Array(1.toByte) else Array(0.toByte)
 
   implicit def Date2ByteBuffer(date: Date): ByteBuffer = ByteBufferUtil.bytes(date.getTime)
+
+  implicit def DateTime2ByteBuffer(date: DateTime): ByteBuffer = ByteBufferUtil.bytes(date.getMillis)
 
   implicit def UUID2ByteBuffer(uuid: UUID): ByteBuffer = ByteBufferUtil.bytes(uuid)
 

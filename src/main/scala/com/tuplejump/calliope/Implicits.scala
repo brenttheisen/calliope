@@ -26,6 +26,7 @@ import org.apache.spark.rdd.RDD
 
 import scala.language.implicitConversions
 import com.tuplejump.calliope.native.NativeCassandraSparkContext
+import java.util.Date
 
 object Implicits {
 

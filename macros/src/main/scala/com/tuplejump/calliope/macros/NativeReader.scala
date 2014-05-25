@@ -97,9 +97,11 @@ object NativeDecodeMacro {
     val companion: Symbol = tpe.typeSymbol.companionSymbol
     val fromNativeParams = getMappers(c)(params, mapperFunction)
 
+
     c.Expr[NativeRowReaderBase[T]] {
       q"""
       import com.tuplejump.calliope.macros.NativeRowReaderBase
+      import com.tuplejump.calliope.utils.ImplicitHelpers._
 
       new NativeRowReaderBase[$tpe] {
         import com.datastax.driver.core.Row
@@ -139,19 +141,22 @@ object NativeDecodeMacro {
         val fieldType: Type = field.asTerm.typeSignature
         val fieldGetter = newTermName(getFieldGetter(c)(fieldType, colName))
 
-        val fromRow = if (fieldType.takesTypeArgs) {
-          val fieldTypeArgs = fieldType match {
-            case TypeRef(_, _, args) => args
-          }
+        val fieldTypeArgs = fieldType match {
+          case TypeRef(_, _, args) => args
+        }
+
+        val fromRow = if (fieldTypeArgs.length > 0) {
+          println(fieldType + "Takes type args")
           if (fieldTypeArgs.size == 1) {
             val typeArgClass = fieldTypeArgs.head.typeSymbol.asClass
-            q"row.$fieldGetter($colName, $typeArgClass)"
+            q"row.$fieldGetter($colName, classOf[$typeArgClass])"
           } else {
             val typeArgClass1 = fieldTypeArgs(0).typeSymbol.asClass
             val typeArgClass2 = fieldTypeArgs(1).typeSymbol.asClass
             q"row.$fieldGetter($colName, $typeArgClass1, $typeArgClass2)"
           }
         } else {
+          println(fieldType + "Takes NO type args")
           q"row.$fieldGetter($colName)"
         }
 
@@ -167,7 +172,7 @@ object NativeDecodeMacro {
         "getInt"
       case "Long" =>
         "getLong"
-      case "Date" =>
+      case "Date" | "DateTime" =>
         "getDate"
       case "Float" =>
         "getFloat"
