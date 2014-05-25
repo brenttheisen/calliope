@@ -146,7 +146,6 @@ object NativeDecodeMacro {
         }
 
         val fromRow = if (fieldTypeArgs.length > 0) {
-          println(fieldType + "Takes type args")
           if (fieldTypeArgs.size == 1) {
             val typeArgClass = fieldTypeArgs.head.typeSymbol.asClass
             q"row.$fieldGetter($colName, classOf[$typeArgClass])"
@@ -156,7 +155,6 @@ object NativeDecodeMacro {
             q"row.$fieldGetter($colName, $typeArgClass1, $typeArgClass2)"
           }
         } else {
-          println(fieldType + "Takes NO type args")
           q"row.$fieldGetter($colName)"
         }
 

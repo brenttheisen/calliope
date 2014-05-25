@@ -71,9 +71,7 @@ public class CqlInputFormat extends AbstractColumnFamilyInputFormat<Long, Row>
 
     @Override
     public org.apache.hadoop.mapreduce.RecordReader<Long, Row> createRecordReader(
-            org.apache.hadoop.mapreduce.InputSplit arg0, TaskAttemptContext arg1) throws IOException,
-            InterruptedException
-    {
+            org.apache.hadoop.mapreduce.InputSplit arg0, TaskAttemptContext arg1) throws IOException, InterruptedException {
         return new CqlRecordReader();
     }
 

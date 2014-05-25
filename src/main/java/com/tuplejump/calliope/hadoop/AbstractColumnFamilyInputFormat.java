@@ -110,7 +110,7 @@ public abstract class AbstractColumnFamilyInputFormat<K, Y> extends InputFormat<
         List<InputSplit> splits = new ArrayList<InputSplit>();
 
         try {
-            List<Future<List<InputSplit>>> splitfutures = new ArrayList<Future<List<InputSplit>>>();
+            List<Future<List<ColumnFamilySplit>>> splitfutures = new ArrayList<Future<List<ColumnFamilySplit>>>();
             KeyRange jobKeyRange = ConfigHelper.getInputKeyRange(conf);
             Range<Token> jobRange = null;
             if (jobKeyRange != null) {
@@ -154,9 +154,11 @@ public abstract class AbstractColumnFamilyInputFormat<K, Y> extends InputFormat<
             }
 
             // wait until we have all the results back
-            for (Future<List<InputSplit>> futureInputSplits : splitfutures) {
+            for (Future<List<ColumnFamilySplit>> futureInputSplits : splitfutures) {
                 try {
-                    splits.addAll(futureInputSplits.get());
+                    List<ColumnFamilySplit> allSplits = futureInputSplits.get();
+                    System.out.println(String.format("CREATED %d Splits", allSplits.size()));
+                    splits.addAll(allSplits);
                 } catch (Exception e) {
                     throw new IOException("Could not get input splits", e);
                 }
@@ -174,7 +176,7 @@ public abstract class AbstractColumnFamilyInputFormat<K, Y> extends InputFormat<
      * Gets a token range and splits it up according to the suggested
      * size into input splits that Hadoop can use.
      */
-    class SplitCallable implements Callable<List<InputSplit>> {
+    class SplitCallable implements Callable<List<ColumnFamilySplit>> {
 
         private final TokenRange range;
         private final Configuration conf;
@@ -184,8 +186,8 @@ public abstract class AbstractColumnFamilyInputFormat<K, Y> extends InputFormat<
             this.conf = conf;
         }
 
-        public List<InputSplit> call() throws Exception {
-            ArrayList<InputSplit> splits = new ArrayList<InputSplit>();
+        public List<ColumnFamilySplit> call() throws Exception {
+            ArrayList<ColumnFamilySplit> splits = new ArrayList<ColumnFamilySplit>();
             List<CfSplit> subSplits = getSubSplits(keyspace, cfName, range, conf);
             assert range.rpc_endpoints.size() == range.endpoints.size() : "rpc_endpoints size must match endpoints size";
             // turn the sub-ranges into InputSplits

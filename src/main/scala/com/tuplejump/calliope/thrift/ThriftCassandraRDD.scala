@@ -59,8 +59,7 @@ class ThriftCassandraRDD[T: ClassTag](sc: SparkContext,
     val hadoopAttemptContext = newTaskAttemptContext(conf, attemptId)
 
 
-    val reader = format.createRecordReader(
-      split.inputSplit.value, hadoopAttemptContext)
+    val reader = format.createRecordReader(split.inputSplit.value, hadoopAttemptContext)
 
     reader.initialize(split.inputSplit.value, hadoopAttemptContext)
     context.addOnCompleteCallback(() => close())
@@ -76,7 +75,7 @@ class ThriftCassandraRDD[T: ClassTag](sc: SparkContext,
       !finished
     }
 
-    override def next: T = {
+    override def next(): T = {
       if (!hasNext) {
         throw new java.util.NoSuchElementException("End of stream")
       }

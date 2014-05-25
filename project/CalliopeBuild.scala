@@ -11,7 +11,7 @@ object CalliopeBuild extends Build {
 
   lazy val THRIFT_VERSION = "0.9.1"
 
-  lazy val SCALA_VERSION = "2.10.3"
+  lazy val SCALA_VERSION = "2.10.4" //Updating to 2.10.4 cause of Spark/SBT issue Spark [https://issues.apache.org/jira/browse/SPARK-1923]
 
   lazy val DS_DRIVER_VERSION = "2.0.2"
 
