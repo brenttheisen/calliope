@@ -80,12 +80,11 @@ class BaseNativeCasBuilder {
    * @param keyspace Keyspace name
    * @param columnFamily Column family nam
    * @param inputCql The CQL query to use to fetch the records. It must be of the form
-   *                 <quote>"select (*|[list of columns]) where token([partition_keys]) > ? and token([partition_keys]) < ? [other where clauses] allow filtering"</quote>
+   *                 <quote>"select (*|[list of columns]) where token([partition_keys]) > ? and token([partition_keys]) <= ? [other where clauses] allow filtering"</quote>
    * @return Cql3CasBuilder
    */
   def withColumnFamilyAndQuery(keyspace: String, columnFamily: String, inputCql: String) = {
-    val cql = if (inputCql.trim.endsWith(";")) inputCql.trim.replaceAll(";$", "") else inputCql
-    val finalCql = if (cql.endsWith("allow filtering")) cql else cql + " allow filtering"
+    val finalCql = if (inputCql.toLowerCase.trim.endsWith("allow filtering")) inputCql else inputCql + " allow filtering"
     new NativeCasBuilder(keyspace, columnFamily, finalCql)
   }
 
@@ -99,7 +98,7 @@ class BaseNativeCasBuilder {
   def withColumnFamilyAndKeyColumns(keyspace: String, columnFamily: String, keys: String*) = {
     require(keys != null && keys.length > 0, "Must pass all the partition keys columns, which cannot be empty")
     val keyString = keys.mkString(",")
-    withColumnFamilyAndQuery(keyspace, columnFamily, s"select * from $columnFamily where token($keyString) > ? and token($keyString) < ? allow filtering")
+    withColumnFamilyAndQuery(keyspace, columnFamily, s"select * from $columnFamily where token($keyString) > ? and token($keyString) <= ? allow filtering")
   }
 
 

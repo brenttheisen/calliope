@@ -97,6 +97,8 @@ object NativeDecodeMacro {
     val companion: Symbol = tpe.typeSymbol.companionSymbol
     val fromNativeParams = getMappers(c)(params, mapperFunction)
 
+    //println(fromNativeParams)
+
 
     c.Expr[NativeRowReaderBase[T]] {
       q"""
@@ -139,7 +141,8 @@ object NativeDecodeMacro {
       case (field: Symbol, index: Int) =>
         val colName = mapperFunction(field.name.toString, index)
         val fieldType: Type = field.asTerm.typeSignature
-        val fieldGetter = newTermName(getFieldGetter(c)(fieldType, colName))
+        val fieldGetterName: String = getFieldGetter(c)(fieldType, colName)
+        val fieldGetter = newTermName(fieldGetterName)
 
         val fieldTypeArgs = fieldType match {
           case TypeRef(_, _, args) => args
@@ -147,18 +150,85 @@ object NativeDecodeMacro {
 
         val fromRow = if (fieldTypeArgs.length > 0) {
           if (fieldTypeArgs.size == 1) {
-            val typeArgClass = fieldTypeArgs.head.typeSymbol.asClass
-            q"row.$fieldGetter($colName, classOf[$typeArgClass])"
+            val eleType: Type = fieldTypeArgs.head
+            val typeArgClass = getFieldClass(c)(eleType)
+
+            val ftMethods = c.typeOf[Row].declarations.filter(_.isMethod).map(_.asMethod).filter(_.name.decoded.contentEquals(fieldGetterName))
+            val ftMet: MethodSymbol = ftMethods.head
+            val ft = ftMet.returnType.typeSymbol.asClass
+
+            if (ft == fieldType.erasure && eleType == typeArgClass) {
+              q"row.$fieldGetter($colName, classOf[$typeArgClass])"
+            } else {
+              q"""
+                 val trans = implicitly[$ft[$typeArgClass] => $fieldType]
+                 trans(row.$fieldGetter($colName, classOf[$typeArgClass]))
+               """
+            }
           } else {
-            val typeArgClass1 = fieldTypeArgs(0).typeSymbol.asClass
-            val typeArgClass2 = fieldTypeArgs(1).typeSymbol.asClass
-            q"row.$fieldGetter($colName, $typeArgClass1, $typeArgClass2)"
+            val eleType1: Type = fieldTypeArgs(0)
+            val eleType2: Type = fieldTypeArgs(1)
+
+            val typeArgClass1 = getFieldClass(c)(eleType1)
+            val typeArgClass2 = getFieldClass(c)(eleType2)
+
+            val ftMethods = c.typeOf[Row].declarations.filter(_.isMethod).map(_.asMethod).filter(_.name.decoded.contentEquals(fieldGetterName))
+            val ftMet: MethodSymbol = ftMethods.head
+            val ft = ftMet.returnType.typeSymbol.asClass
+
+            if (ft == fieldType.erasure && eleType1 == typeArgClass1) {
+              q"row.$fieldGetter($colName, classOf[$typeArgClass1], classOf[$typeArgClass2])"
+            } else {
+              q"""
+                 val trans = implicitly[$ft[$typeArgClass1, $typeArgClass2] => $fieldType]
+                 trans(row.$fieldGetter($colName, classOf[$typeArgClass1], classOf[$typeArgClass2]))
+               """
+            }
           }
         } else {
-          q"row.$fieldGetter($colName)"
+          if (fieldGetterName.equalsIgnoreCase("getBytesUnsafe")) {
+            q"""
+               val trans = implicitly[ByteBuffer => $fieldType]
+               trans(row.$fieldGetter($colName))
+            """
+          } else {
+            q"row.$fieldGetter($colName)"
+          }
         }
 
         fromRow
+    }
+  }
+
+  private def getFieldClass(c: Context)(ft: c.type#Type) = {
+    import c.universe._
+    ft.typeSymbol.name.toString match {
+      case "Boolean" =>
+        typeOf[java.lang.Boolean]
+      case "Int" | "Integer" =>
+        typeOf[java.lang.Integer]
+      case "Long" =>
+        typeOf[java.lang.Long]
+      case "Date" | "DateTime" =>
+        typeOf[java.util.Date]
+      case "Float" =>
+        typeOf[java.lang.Float]
+      case "Double" =>
+        typeOf[java.lang.Double]
+      case "ByteBuffer" =>
+        typeOf[java.nio.ByteBuffer]
+      case "String" =>
+        typeOf[java.lang.String]
+      case "BigInteger" =>
+        typeOf[java.math.BigInteger]
+      case "BigDecimal" =>
+        typeOf[java.math.BigDecimal]
+      case "UUID" =>
+        typeOf[java.util.UUID]
+      case "InetAddress" =>
+        typeOf[java.net.InetAddress]
+      case x =>
+        typeOf[java.nio.ByteBuffer]
     }
   }
 
@@ -195,7 +265,6 @@ object NativeDecodeMacro {
       case "Map" =>
         "getMap"
       case x =>
-        println(x)
         "getBytesUnsafe"
     }
   }

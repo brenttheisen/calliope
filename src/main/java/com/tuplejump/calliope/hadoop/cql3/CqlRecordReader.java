@@ -214,6 +214,13 @@ public class CqlRecordReader extends RecordReader<Long, Row>
                 throw new RuntimeException("Can't create connection session");
 
             AbstractType type = partitioner.getTokenValidator();
+
+            if (logger.isDebugEnabled()) {
+                logger.debug("QUERY: " + cqlQuery);
+                logger.debug("START: " + split.getStartToken());
+                logger.debug("END: " + split.getEndToken());
+            }
+
             ResultSet rs = session.execute(cqlQuery, type.compose(type.fromString(split.getStartToken())), type.compose(type.fromString(split.getEndToken())));
             for (ColumnMetadata meta : cluster.getMetadata().getKeyspace(keyspace).getTable(cfName).getPartitionKey())
                 partitionBoundColumns.put(meta.getName(), Boolean.TRUE);
