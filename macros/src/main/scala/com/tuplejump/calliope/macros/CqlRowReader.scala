@@ -103,6 +103,7 @@ object CqlRowDecodeMacro {
       new CqlRowReaderBase[$tpe] {
         import com.tuplejump.calliope.Types.{CQLRowKeyMap, CQLRowMap}
         import com.tuplejump.calliope.utils.RichByteBuffer._
+        import java.nio.ByteBuffer
 
         implicit def fromCqlRow(k: CQLRowKeyMap, v: CQLRowMap) = {
           val map = k ++ v
@@ -138,9 +139,13 @@ object CqlRowDecodeMacro {
     import c.universe._
     params.zipWithIndex.map {
       case (field: Symbol, index: Int) =>
+        val fieldType: Type = field.asTerm.typeSignature
         val colName = mapperFunction(field.name.toString, index)
 
-        q"map($colName)"
+        q"""
+            val trans = implicitly[ByteBuffer => $fieldType]
+            trans(map($colName))
+         """
     }
   }
 
