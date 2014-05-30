@@ -104,6 +104,7 @@ object CqlRowEncodeMacro {
       q"""
       import com.tuplejump.calliope.macros.CqlRowWriterBase
       import com.tuplejump.calliope.utils.RichByteBuffer._
+      import java.nio.ByteBuffer
 
       new CqlRowWriterBase[$tpe] {
         import com.tuplejump.calliope.Types.CQLRowMap
@@ -144,8 +145,12 @@ object CqlRowEncodeMacro {
       case (field: Symbol, index: Int) =>
         val colName = mapperFunction(field.name.toString, index)
         val name = field.name.asInstanceOf[TermName]
+        val fieldType: Type = field.asTerm.typeSignature
 
-        val toMap = q"$colName -> t.$name"
+        val toMap = q"""
+          val trans = implicitly[$fieldType => ByteBuffer]
+          $colName -> t.$name
+        """
 
         toMap
     }
