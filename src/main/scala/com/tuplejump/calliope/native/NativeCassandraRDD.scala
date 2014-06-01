@@ -35,11 +35,14 @@ private[calliope] class NativeCassandraRDD[T: ClassTag](sc: SparkContext,
     val conf = confBroadcast.value.value
     val format = new CqlInputFormat
     val split = theSplit.asInstanceOf[CassandraPartition]
+    logInfo("Input split: " + split.inputSplit)
+
     //Set configuration
     val attemptId = new TaskAttemptID(jobtrackerId, id, true, split.index, 0)
     val hadoopAttemptContext = newTaskAttemptContext(conf, attemptId)
 
 
+    logInfo(s"Will create record reader for ${format}")
     val reader = format.createRecordReader(split.inputSplit.value, hadoopAttemptContext)
 
     reader.initialize(split.inputSplit.value, hadoopAttemptContext)
@@ -82,6 +85,7 @@ private[calliope] class NativeCassandraRDD[T: ClassTag](sc: SparkContext,
 
   def getPartitions: Array[Partition] = {
 
+    logInfo("Building partitions")
     val jc = newJobContext(hadoopConf, jobId)
     val inputFormat = new CqlInputFormat
     val rawSplits = inputFormat.getSplits(jc).toArray
@@ -89,6 +93,7 @@ private[calliope] class NativeCassandraRDD[T: ClassTag](sc: SparkContext,
     for (i <- 0 until rawSplits.size) {
       result(i) = new CassandraPartition(id, i, rawSplits(i).asInstanceOf[InputSplit])
     }
+    logInfo(s"Got ${result.length} partitions ")
     result
   }
 

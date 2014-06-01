@@ -74,6 +74,26 @@ public class CqlConfigHelper {
 
     private static final String OUTPUT_CQL = "cassandra.output.cql";
 
+    private static final String MULTIRANGE_INPUT_SPLIT = "cassandra.input.multirange.use";
+    private static final String RANGES_PER_SPLIT = "cassandra.input.multirange.ranges";
+
+
+    public static void setMultirangeInputSplit(Configuration conf, boolean useMultirange) {
+        conf.setBoolean(MULTIRANGE_INPUT_SPLIT, useMultirange);
+    }
+
+    public static Boolean getMultiRangeInputSplit(Configuration conf) {
+        return conf.getBoolean(MULTIRANGE_INPUT_SPLIT, false);
+    }
+
+    public static void setRangesInMultiRangeSplit(Configuration conf, int ranges) {
+        conf.setInt(RANGES_PER_SPLIT, ranges);
+    }
+
+    public static Integer getRangesInMultiRangeSplit(Configuration conf) {
+        return conf.getInt(RANGES_PER_SPLIT, 1);
+    }
+
     /**
      * Set the CQL columns for the input of this job.
      *

@@ -157,7 +157,6 @@ public abstract class AbstractColumnFamilyInputFormat<K, Y> extends InputFormat<
             for (Future<List<ColumnFamilySplit>> futureInputSplits : splitfutures) {
                 try {
                     List<ColumnFamilySplit> allSplits = futureInputSplits.get();
-                    System.out.println(String.format("CREATED %d Splits", allSplits.size()));
                     splits.addAll(allSplits);
                 } catch (Exception e) {
                     throw new IOException("Could not get input splits", e);
@@ -188,7 +187,7 @@ public abstract class AbstractColumnFamilyInputFormat<K, Y> extends InputFormat<
 
         public List<ColumnFamilySplit> call() throws Exception {
             ArrayList<ColumnFamilySplit> splits = new ArrayList<ColumnFamilySplit>();
-            List<CfSplit> subSplits = getSubSplits(keyspace, cfName, range, conf);
+           List<CfSplit> subSplits = getSubSplits(keyspace, cfName, range, conf);
             assert range.rpc_endpoints.size() == range.endpoints.size() : "rpc_endpoints size must match endpoints size";
             // turn the sub-ranges into InputSplits
             String[] endpoints = range.endpoints.toArray(new String[range.endpoints.size()]);
@@ -265,13 +264,12 @@ public abstract class AbstractColumnFamilyInputFormat<K, Y> extends InputFormat<
         return splits;
     }
 
-    private List<TokenRange> getRangeMap(Configuration conf) throws IOException {
+    protected List<TokenRange> getRangeMap(Configuration conf) throws IOException {
         Cassandra.Client client = ConfigHelper.getClientFromInputAddressList(conf);
 
         List<TokenRange> map;
         try {
             map = client.describe_local_ring(ConfigHelper.getInputKeyspace(conf));
-            logger.info("GOT TOKEN RANGES: " + map.size());
         } catch (InvalidRequestException e) {
             throw new RuntimeException(e);
         } catch (TException e) {

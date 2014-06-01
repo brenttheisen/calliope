@@ -23,6 +23,7 @@ import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.Maps;
 import com.tuplejump.calliope.hadoop.ColumnFamilySplit;
 import com.tuplejump.calliope.hadoop.ConfigHelper;
+import com.tuplejump.calliope.hadoop.MultiRangeSplit;
 import org.apache.cassandra.db.marshal.AbstractType;
 import org.apache.cassandra.db.marshal.BytesType;
 import org.apache.cassandra.dht.IPartitioner;
@@ -56,8 +57,7 @@ import java.util.*;
 public class CqlRecordReader extends RecordReader<Long, Row>
         implements org.apache.hadoop.mapred.RecordReader<Long, Row> {
     private static final Logger logger = LoggerFactory.getLogger(CqlRecordReader.class);
-
-    private ColumnFamilySplit split;
+    private InputSplit split;
     private RowIterator rowIterator;
 
     private Pair<Long, Row> currentRow;
@@ -74,13 +74,25 @@ public class CqlRecordReader extends RecordReader<Long, Row>
 
     public CqlRecordReader() {
         super();
+        logger.info("Creating CQL Record Reader");
     }
 
     public void initialize(InputSplit split, TaskAttemptContext context) throws IOException {
-        this.split = (ColumnFamilySplit) split;
+        if (CqlConfigHelper.getMultiRangeInputSplit(context.getConfiguration())) {
+            logger.info("Initializing Record reader with MultiRangeSplit");
+            initializeWithMultiRangeSplit(split, context);
+        } else {
+            logger.info("Initializing Record reader with SingleRangeSplit");
+            initializeWithColumnFamilySplit(split, context);
+        }
+    }
+
+    private void initializeWithColumnFamilySplit(InputSplit split, TaskAttemptContext context) throws IOException {
+        this.split = split;
+        ColumnFamilySplit cfSplit = (ColumnFamilySplit) split;
         Configuration conf = context.getConfiguration();
-        totalRowCount = (this.split.getLength() < Long.MAX_VALUE)
-                ? (int) this.split.getLength()
+        totalRowCount = (cfSplit.getLength() < Long.MAX_VALUE)
+                ? (int) cfSplit.getLength()
                 : ConfigHelper.getInputSplitSize(conf);
         cfName = quote(ConfigHelper.getInputColumnFamily(conf));
         keyspace = quote(ConfigHelper.getInputKeyspace(conf));
@@ -126,9 +138,65 @@ public class CqlRecordReader extends RecordReader<Long, Row>
                 throw nha;
             }
         }
-        rowIterator = new RowIterator();
+        rowIterator = new SingleRangeRowIterator();
         logger.debug("created {}", rowIterator);
     }
+
+    private void initializeWithMultiRangeSplit(InputSplit split, TaskAttemptContext context) throws IOException {
+        this.split = split;
+        MultiRangeSplit cfSplit = (MultiRangeSplit) split;
+        Configuration conf = context.getConfiguration();
+        totalRowCount = (cfSplit.getLength() < Long.MAX_VALUE)
+                ? (int) cfSplit.getLength()
+                : ConfigHelper.getInputSplitSize(conf);
+        cfName = quote(ConfigHelper.getInputColumnFamily(conf));
+        keyspace = quote(ConfigHelper.getInputKeyspace(conf));
+        cqlQuery = CqlConfigHelper.getInputCql(conf);
+        partitioner = ConfigHelper.getInputPartitioner(context.getConfiguration());
+
+        try {
+            if (cluster != null)
+                return;
+            // create connection using thrift
+            String[] locations = split.getLocations();
+
+            Exception lastException = null;
+            for (String location : locations) {
+                try {
+                    cluster = CqlConfigHelper.getInputCluster(location, conf);
+                    break;
+                } catch (Exception e) {
+                    lastException = e;
+                    logger.warn("Failed to create authenticated client to {}", location);
+                }
+            }
+            if (cluster == null && lastException != null)
+                throw lastException;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        if (cluster != null) {
+            try {
+                session = cluster.connect(keyspace);
+            } catch (NoHostAvailableException nha) {
+                Map<InetSocketAddress, Throwable> errors = nha.getErrors();
+                logger.error(errors.toString());
+                for (InetSocketAddress isa : errors.keySet()) {
+                    logger.error("ERROR ON HOST [" + isa.getAddress() + "/" + isa.getPort() + "] ");
+                    logger.error(errors.get(isa).getMessage());
+                    logger.error("Connection Timeout:  " + cluster.getConfiguration().getSocketOptions().getConnectTimeoutMillis());
+                    logger.error("Local connection limit:  " + cluster.getConfiguration().getPoolingOptions().getCoreConnectionsPerHost(HostDistance.LOCAL));
+                    logger.error("Remote connection limit:  " + cluster.getConfiguration().getPoolingOptions().getCoreConnectionsPerHost(HostDistance.REMOTE));
+                    //logger.error("Connection Timeout:  " + cluster.getConfiguration().getSocketOptions().);
+                }
+                throw nha;
+            }
+        }
+        rowIterator = new MultiRangeRowIterator();
+        logger.debug("created {}", rowIterator);
+    }
+
 
     public void close() {
         if (session != null)
@@ -196,6 +264,11 @@ public class CqlRecordReader extends RecordReader<Long, Row>
         return new WrappedRow();
     }
 
+
+    private abstract class RowIterator extends AbstractIterator<Pair<Long, Row>> {
+        protected int totalRead = 0; // total number of cf rows read
+    }
+
     /**
      * CQL row iterator
      * Input cql query
@@ -203,13 +276,13 @@ public class CqlRecordReader extends RecordReader<Long, Row>
      * 2) where clause must include token(partition_key1 ... partition_keyn) > ? and
      * token(partition_key1 ... partition_keyn) <= ?
      */
-    private class RowIterator extends AbstractIterator<Pair<Long, Row>> {
+    private class SingleRangeRowIterator extends RowIterator {
         private long keyId = 0L;
-        protected int totalRead = 0; // total number of cf rows read
         protected Iterator<Row> rows;
         private Map<String, ByteBuffer> previousRowKey = new HashMap<String, ByteBuffer>(); // previous CF row key
 
-        public RowIterator() {
+        public SingleRangeRowIterator() {
+            ColumnFamilySplit cfSplit = (ColumnFamilySplit) split;
             if (session == null)
                 throw new RuntimeException("Can't create connection session");
 
@@ -217,11 +290,11 @@ public class CqlRecordReader extends RecordReader<Long, Row>
 
             if (logger.isDebugEnabled()) {
                 logger.debug("QUERY: " + cqlQuery);
-                logger.debug("START: " + split.getStartToken());
-                logger.debug("END: " + split.getEndToken());
+                logger.debug("START: " + cfSplit.getStartToken());
+                logger.debug("END: " + cfSplit.getEndToken());
             }
 
-            ResultSet rs = session.execute(cqlQuery, type.compose(type.fromString(split.getStartToken())), type.compose(type.fromString(split.getEndToken())));
+            ResultSet rs = session.execute(cqlQuery, type.compose(type.fromString(cfSplit.getStartToken())), type.compose(type.fromString(cfSplit.getEndToken())));
             for (ColumnMetadata meta : cluster.getMetadata().getKeyspace(keyspace).getTable(cfName).getPartitionKey())
                 partitionBoundColumns.put(meta.getName(), Boolean.TRUE);
             rows = rs.iterator();
@@ -253,6 +326,90 @@ public class CqlRecordReader extends RecordReader<Long, Row>
             return Pair.create(keyId, row);
         }
     }
+
+
+    /**
+     * CQL row iterator
+     * Input cql query
+     * 1) select clause must include key columns (if we use partition key based row count)
+     * 2) where clause must include token(partition_key1 ... partition_keyn) > ? and
+     * token(partition_key1 ... partition_keyn) <= ?
+     */
+    private class MultiRangeRowIterator extends RowIterator {
+        private long keyId = 0L;
+        protected Iterator<Row> currentRangeRows;
+        private Stack<MultiRangeSplit.TokenRange> tokenRanges;
+        private Map<String, ByteBuffer> previousRowKey = new HashMap<String, ByteBuffer>(); // previous CF row key
+        AbstractType validatorType;
+
+        public MultiRangeRowIterator() {
+            MultiRangeSplit cfSplit = (MultiRangeSplit) split;
+            if (session == null)
+                throw new RuntimeException("Can't create connection session");
+
+            validatorType = partitioner.getTokenValidator();
+
+            if (logger.isDebugEnabled()) {
+                logger.debug("QUERY: " + cqlQuery);
+                logger.debug("Multi Range length is " + cfSplit.getLength());
+            }
+
+            logger.info("Created new MultiRangeRowIterator");
+            tokenRanges = new Stack<>();
+            tokenRanges.addAll(cfSplit.getTokenRanges());
+        }
+
+        private Iterator<Row> getNextRange() {
+            //if (logger.isDebugEnabled())
+            logger.info(String.format("Processing new token range. %d more to go!", tokenRanges.size()));
+
+            MultiRangeSplit.TokenRange range = tokenRanges.pop();
+            ResultSet rs = session.execute(cqlQuery, validatorType.compose(validatorType.fromString(range.getStartToken())), validatorType.compose(validatorType.fromString(range.getEndToken())));
+            for (ColumnMetadata meta : cluster.getMetadata().getKeyspace(keyspace).getTable(cfName).getPartitionKey())
+                partitionBoundColumns.put(meta.getName(), Boolean.TRUE);
+            return rs.iterator();
+        }
+
+        private Row getNextRow() {
+            if (currentRangeRows == null || !currentRangeRows.hasNext()) {
+                if (tokenRanges.empty()) {
+                    return null;
+                } else {
+                    currentRangeRows = getNextRange();
+                }
+            }
+            return currentRangeRows.next();
+        }
+
+        protected Pair<Long, Row> computeNext() {
+            Row row = getNextRow();
+
+            if (row == null) return endOfData();
+
+            if (logger.isDebugEnabled()) logger.debug("Got new row. Row # %d of total # %d", totalRead, totalRowCount);
+
+            Map<String, ByteBuffer> keyColumns = new HashMap<String, ByteBuffer>();
+            for (String column : partitionBoundColumns.keySet())
+                keyColumns.put(column, row.getBytesUnsafe(column));
+
+            // increase total CF row read
+            if (previousRowKey.isEmpty() && !keyColumns.isEmpty()) {
+                previousRowKey = keyColumns;
+                totalRead++;
+            } else {
+                for (String column : partitionBoundColumns.keySet()) {
+                    if (BytesType.bytesCompare(keyColumns.get(column), previousRowKey.get(column)) != 0) {
+                        previousRowKey = keyColumns;
+                        totalRead++;
+                        break;
+                    }
+                }
+            }
+            keyId++;
+            return Pair.create(keyId, row);
+        }
+    }
+
 
     private static class WrappedRow implements Row {
         private Row row;

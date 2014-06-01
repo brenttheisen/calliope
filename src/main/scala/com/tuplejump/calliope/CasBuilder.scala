@@ -513,7 +513,9 @@ class NativeCasBuilder(keyspace: String,
                        inputSplitSize: Option[Long] = None,
                        outputCompressionClass: Option[String] = None,
                        outputCompressionChunkLength: Option[String] = None,
-                       customConfig: Option[Configuration] = None
+                       customConfig: Option[Configuration] = None,
+                       useMultiRangeSplits: Boolean = false,
+                       rangesPerMultiRangeSplit: Option[Int] = None
                         ) extends CommonCasBuilder(keyspace, columnFamily, false, host, port, partitioner, None, username, password, None, writeConsistencyLevel, inputSplitSize, outputCompressionClass, outputCompressionChunkLength, customConfig) {
 
   /**
@@ -521,91 +523,99 @@ class NativeCasBuilder(keyspace: String,
    * @param host
    */
   def onHost(host: String) = new NativeCasBuilder(
-    keyspace, columnFamily, inputCql, host, port, nativePort, partitioner, username, password, pageSize, preparedSaveQuery, writeConsistencyLevel, inputSplitSize, outputCompressionClass, outputCompressionChunkLength, customConfig)
+    keyspace, columnFamily, inputCql, host, port, nativePort, partitioner, username, password, pageSize, preparedSaveQuery, writeConsistencyLevel, inputSplitSize, outputCompressionClass, outputCompressionChunkLength, customConfig, useMultiRangeSplits, rangesPerMultiRangeSplit)
 
   /**
    * Port to use for initial cassandra connection
    * @param port
    */
   def onPort(port: String) = new NativeCasBuilder(
-    keyspace, columnFamily, inputCql, host, port, nativePort, partitioner, username, password, pageSize, preparedSaveQuery, writeConsistencyLevel, inputSplitSize, outputCompressionClass, outputCompressionChunkLength, customConfig)
+    keyspace, columnFamily, inputCql, host, port, nativePort, partitioner, username, password, pageSize, preparedSaveQuery, writeConsistencyLevel, inputSplitSize, outputCompressionClass, outputCompressionChunkLength, customConfig, useMultiRangeSplits, rangesPerMultiRangeSplit)
 
   /**
    * Set the native port the cassandra server is listening on
    * @param nativePort
    */
   def onNativePort(nativePort: String) = new NativeCasBuilder(
-    keyspace, columnFamily, inputCql, host, port, nativePort, partitioner, username, password, pageSize, preparedSaveQuery, writeConsistencyLevel, inputSplitSize, outputCompressionClass, outputCompressionChunkLength, customConfig)
+    keyspace, columnFamily, inputCql, host, port, nativePort, partitioner, username, password, pageSize, preparedSaveQuery, writeConsistencyLevel, inputSplitSize, outputCompressionClass, outputCompressionChunkLength, customConfig, useMultiRangeSplits, rangesPerMultiRangeSplit)
 
   /**
    * The partitioner being used by this column family
    * @param partitioner
    */
   def patitionedUsing(partitioner: CasPartitioners.Value) = new NativeCasBuilder(
-    keyspace, columnFamily, inputCql, host, port, nativePort, partitioner, username, password, pageSize, preparedSaveQuery, writeConsistencyLevel, inputSplitSize, outputCompressionClass, outputCompressionChunkLength, customConfig)
+    keyspace, columnFamily, inputCql, host, port, nativePort, partitioner, username, password, pageSize, preparedSaveQuery, writeConsistencyLevel, inputSplitSize, outputCompressionClass, outputCompressionChunkLength, customConfig, useMultiRangeSplits, rangesPerMultiRangeSplit)
 
   /**
    * User to authenticate with to Cassandra
    * @param user
    */
   def authAs(user: String) = new NativeCasBuilder(
-    keyspace, columnFamily, inputCql, host, port, nativePort, partitioner, Some(user), password, pageSize, preparedSaveQuery, writeConsistencyLevel, inputSplitSize, outputCompressionClass, outputCompressionChunkLength, customConfig)
+    keyspace, columnFamily, inputCql, host, port, nativePort, partitioner, Some(user), password, pageSize, preparedSaveQuery, writeConsistencyLevel, inputSplitSize, outputCompressionClass, outputCompressionChunkLength, customConfig, useMultiRangeSplits, rangesPerMultiRangeSplit)
 
   /**
    * Password to use for authenticating the user with cassandra
    * @param pass
    */
   def withPassword(pass: String) = new NativeCasBuilder(
-    keyspace, columnFamily, inputCql, host, port, nativePort, partitioner, username, Some(pass), pageSize, preparedSaveQuery, writeConsistencyLevel, inputSplitSize, outputCompressionClass, outputCompressionChunkLength, customConfig)
+    keyspace, columnFamily, inputCql, host, port, nativePort, partitioner, username, Some(pass), pageSize, preparedSaveQuery, writeConsistencyLevel, inputSplitSize, outputCompressionClass, outputCompressionChunkLength, customConfig, useMultiRangeSplits, rangesPerMultiRangeSplit)
 
   /**
    * The number of rows to be fetched from cassandra in a single iterator. This should be  as large as possible but not larger.
    * @param size
    */
   def setPageSize(size: Long) = new NativeCasBuilder(
-    keyspace, columnFamily, inputCql, host, port, nativePort, partitioner, username, password, Some(size), preparedSaveQuery, writeConsistencyLevel, inputSplitSize, outputCompressionClass, outputCompressionChunkLength, customConfig)
+    keyspace, columnFamily, inputCql, host, port, nativePort, partitioner, username, password, Some(size), preparedSaveQuery, writeConsistencyLevel, inputSplitSize, outputCompressionClass, outputCompressionChunkLength, customConfig, useMultiRangeSplits, rangesPerMultiRangeSplit)
 
   /**
    * The CQL3 Update query to be used while persisting data to Cassandra
    * @param query
    */
   def saveWithQuery(query: String) = new NativeCasBuilder(
-    keyspace, columnFamily, inputCql, host, port, nativePort, partitioner, username, password, pageSize, Some(query), writeConsistencyLevel, inputSplitSize, outputCompressionClass, outputCompressionChunkLength, customConfig)
+    keyspace, columnFamily, inputCql, host, port, nativePort, partitioner, username, password, pageSize, Some(query), writeConsistencyLevel, inputSplitSize, outputCompressionClass, outputCompressionChunkLength, customConfig, useMultiRangeSplits, rangesPerMultiRangeSplit)
 
   /**
    * Use this consistency level for write (do this only if you are sure that you need it, this may affect the performance)
    * @param consistencyLevel
    */
   def useWriteConsistencyLevel(consistencyLevel: String) = new NativeCasBuilder(
-    keyspace, columnFamily, inputCql, host, port, nativePort, partitioner, username, password, pageSize, preparedSaveQuery, Some(consistencyLevel), inputSplitSize, outputCompressionClass, outputCompressionChunkLength, customConfig)
+    keyspace, columnFamily, inputCql, host, port, nativePort, partitioner, username, password, pageSize, preparedSaveQuery, Some(consistencyLevel), inputSplitSize, outputCompressionClass, outputCompressionChunkLength, customConfig, useMultiRangeSplits, rangesPerMultiRangeSplit)
 
   /**
    * Set the compression class to use to output from maps job
    * @param compressionClass
    */
   def useOutputCompressionClass(compressionClass: String) = new NativeCasBuilder(
-    keyspace, columnFamily, inputCql, host, port, nativePort, partitioner, username, password, pageSize, preparedSaveQuery, writeConsistencyLevel, inputSplitSize, Some(compressionClass), outputCompressionChunkLength, customConfig)
+    keyspace, columnFamily, inputCql, host, port, nativePort, partitioner, username, password, pageSize, preparedSaveQuery, writeConsistencyLevel, inputSplitSize, Some(compressionClass), outputCompressionChunkLength, customConfig, useMultiRangeSplits, rangesPerMultiRangeSplit)
 
   /**
    * Set the size of data to compression in a chunk
    * @param chunkLength
    */
   def setOutputCompressionChunkLength(chunkLength: String) = new NativeCasBuilder(
-    keyspace, columnFamily, inputCql, host, port, nativePort, partitioner, username, password, pageSize, preparedSaveQuery, writeConsistencyLevel, inputSplitSize, outputCompressionClass, Some(chunkLength), customConfig)
+    keyspace, columnFamily, inputCql, host, port, nativePort, partitioner, username, password, pageSize, preparedSaveQuery, writeConsistencyLevel, inputSplitSize, outputCompressionClass, Some(chunkLength), customConfig, useMultiRangeSplits, rangesPerMultiRangeSplit)
 
   /**
    * Set the number of keys to in split range that is processed per task
    * @param splitSize
    */
   def inputSplitSize(splitSize: Int) = new NativeCasBuilder(
-    keyspace, columnFamily, inputCql, host, port, nativePort, partitioner, username, password, pageSize, preparedSaveQuery, writeConsistencyLevel, Some(splitSize), outputCompressionClass, outputCompressionChunkLength, customConfig)
+    keyspace, columnFamily, inputCql, host, port, nativePort, partitioner, username, password, pageSize, preparedSaveQuery, writeConsistencyLevel, Some(splitSize), outputCompressionClass, outputCompressionChunkLength, customConfig, useMultiRangeSplits, rangesPerMultiRangeSplit)
 
   /**
    * Apply the given hadoop configuration
    * @param config
    */
   def applyCustomConfig(config: Configuration) = new NativeCasBuilder(
-    keyspace, columnFamily, inputCql, host, port, nativePort, partitioner, username, password, pageSize, preparedSaveQuery, writeConsistencyLevel, inputSplitSize, outputCompressionClass, outputCompressionChunkLength, Some(config))
+    keyspace, columnFamily, inputCql, host, port, nativePort, partitioner, username, password, pageSize, preparedSaveQuery, writeConsistencyLevel, inputSplitSize, outputCompressionClass, outputCompressionChunkLength, Some(config), useMultiRangeSplits, rangesPerMultiRangeSplit)
+
+  /**
+   * Configure to compute with multiple ranges per split and set the number of splits in a range
+   * @param rangesPerSplit
+   * @return
+   */
+  def mergeRangesInMultiRangeSplit(rangesPerSplit: Int) = new NativeCasBuilder(
+    keyspace, columnFamily, inputCql, host, port, nativePort, partitioner, username, password, pageSize, preparedSaveQuery, writeConsistencyLevel, inputSplitSize, outputCompressionClass, outputCompressionChunkLength, customConfig, true, Some(rangesPerSplit))
 
   override def configuration = {
     val job = configure()
@@ -619,6 +629,11 @@ class NativeCasBuilder(keyspace: String,
 
     preparedSaveQuery map {
       case pql: String => CqlConfigHelper.setOutputCql(job.getConfiguration, pql)
+    }
+
+    if (this.useMultiRangeSplits) {
+      CqlConfigHelper.setMultirangeInputSplit(job.getConfiguration, this.useMultiRangeSplits)
+      CqlConfigHelper.setRangesInMultiRangeSplit(job.getConfiguration, this.rangesPerMultiRangeSplit.get)
     }
 
     job.getConfiguration
