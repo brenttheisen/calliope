@@ -31,7 +31,7 @@ class NativeCassandraRDDSpec extends FunSpec with BeforeAndAfterAll with ShouldM
 
       import transformer._
 
-      val cas = CasBuilder.native.withColumnFamilyAndKeyColumns("cql3_test", "emp_read_test", "deptid").inputSplitSize(64 * 1024 * (256 / 4)).mergeRangesInMultiRangeSplit(256)
+      val cas = CasBuilder.native.withColumnFamilyAndKeyColumns("cql3_test", "emp_read_test", "deptid").inputSplitSize(64 * 1024 * (256 / 4)) //.mergeRangesInMultiRangeSplit(256)
 
 
       val casrdd = sc.nativeCassandra[NativeEmployee](cas)
@@ -57,7 +57,7 @@ class NativeCassandraRDDSpec extends FunSpec with BeforeAndAfterAll with ShouldM
       val token = "token(deptid)"
       val inputCql: String = s"select deptid, first_name, last_name from $columnFamily where $token > ? and $token <? allow filtering"
 
-      val cas = CasBuilder.native.withColumnFamilyAndQuery("cql3_test", columnFamily, inputCql).mergeRangesInMultiRangeSplit(256)
+      val cas = CasBuilder.native.withColumnFamilyAndQuery("cql3_test", columnFamily, inputCql) //.mergeRangesInMultiRangeSplit(256)
 
       val casrdd = sc.nativeCassandra[(String, String)](cas)
 
@@ -79,7 +79,7 @@ class NativeCassandraRDDSpec extends FunSpec with BeforeAndAfterAll with ShouldM
       val token = "token(deptid)"
 
       val query = s"select * from $columnFamily where $token > ? and $token <? and first_name = 'john' allow filtering"
-      val cas = CasBuilder.native.withColumnFamilyAndQuery("cql3_test", "emp_read_test", query).mergeRangesInMultiRangeSplit(256)
+      val cas = CasBuilder.native.withColumnFamilyAndQuery("cql3_test", "emp_read_test", query) //.mergeRangesInMultiRangeSplit(256)
 
       val casrdd = sc.nativeCassandra[NativeEmployee](cas)
 
