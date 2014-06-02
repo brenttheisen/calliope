@@ -1,11 +1,10 @@
 import sbt._
 import sbt.Keys._
 
-object CalliopeBuild extends Build {
+object
+CalliopeBuild extends Build {
 
-  lazy val USE_CASV2 = System.getenv("USE_CASV2") != null && System.getenv("USE_CASV2").equalsIgnoreCase("true")
-
-  lazy val VERSION = "0.9.3-EA-SNAPSHOT"
+  lazy val VERSION = "0.9.4-EA-SNAPSHOT"
 
   lazy val CAS_VERSION = "2.0.7"
 
@@ -17,17 +16,17 @@ object CalliopeBuild extends Build {
 
   lazy val PARADISE_VERSION = "2.0.0"
 
+  lazy val SPARK_VERSION = "1.0.0"
+
   lazy val calliope = {
     val dependencies = Seq(
       "org.apache.cassandra" % "cassandra-all" % CAS_VERSION % "provided" intransitive(),
       "org.apache.cassandra" % "cassandra-thrift" % CAS_VERSION % "provided" intransitive(),
       "org.apache.thrift" % "libthrift" % THRIFT_VERSION exclude("org.slf4j", "slf4j-api") exclude("javax.servlet", "servlet-api"),
       "com.datastax.cassandra" % "cassandra-driver-core" % DS_DRIVER_VERSION intransitive(),
-      "org.slf4j" % "slf4j-jdk14" % "1.7.5",
-      "org.apache.spark" %% "spark-core" % "0.9.1" % "provided" exclude("org.apache.hadoop", "hadoop-core"),
-      "org.apache.spark" %% "spark-streaming" % "0.9.1" % "provided",
-      "org.apache.hadoop" % "hadoop-core" % "1.0.3" % "provided",
-      "org.apache.commons" % "commons-lang3" % "3.1",
+      "org.apache.spark" %% "spark-core" % SPARK_VERSION % "provided" exclude("org.apache.hadoop", "hadoop-core"),
+      "org.apache.spark" %% "spark-streaming" % SPARK_VERSION % "provided",
+      "org.apache.hadoop" % "hadoop-core" % "1.0.4" % "provided",
       "com.github.nscala-time" %% "nscala-time" % "1.0.0",
       "org.scalatest" %% "scalatest" % "1.9.1" % "test"
     )
@@ -58,11 +57,7 @@ object CalliopeBuild extends Build {
 
       crossScalaVersions := Seq("2.10.3"),
 
-      scalacOptions <<= scalaVersion map {
-        v: String =>
-          val default = "-deprecation" :: "-unchecked" :: Nil
-          if (v.startsWith("2.9.")) default else default :+ "-feature"
-      },
+      scalacOptions := "-deprecation" :: "-unchecked" :: "-feature" :: Nil,
 
       libraryDependencies ++= dependencies,
 
@@ -122,7 +117,7 @@ object CalliopeBuild extends Build {
 
       libraryDependencies <+= (scalaVersion)("org.scala-lang" % "scala-reflect" % _),
 
-      scalacOptions := "-Ymacro-debug-lite" :: Nil
+      scalacOptions := "-Ymacro-debug-lite" :: "-deprecation" :: "-unchecked" :: "-feature" :: Nil
     )
   )
 
