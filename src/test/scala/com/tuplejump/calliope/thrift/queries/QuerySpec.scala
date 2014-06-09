@@ -59,7 +59,6 @@ class QuerySpec extends FunSpec with ShouldMatchers with MustMatchers {
       val q = Query().where("name").isEq("John")
 
       val exprs = q.getExpressions()
-      println(exprs)
       exprs.length must be(1)
 
       val expr = exprs(0)

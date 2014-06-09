@@ -18,21 +18,7 @@ CalliopeBuild extends Build {
 
   lazy val SPARK_VERSION = "1.0.0"
 
-  lazy val calliope = {
-    val dependencies = Seq(
-      "org.apache.cassandra" % "cassandra-all" % CAS_VERSION % "provided" intransitive(),
-      "org.apache.cassandra" % "cassandra-thrift" % CAS_VERSION % "provided" intransitive(),
-      "org.apache.thrift" % "libthrift" % THRIFT_VERSION exclude("org.slf4j", "slf4j-api") exclude("javax.servlet", "servlet-api"),
-      "com.datastax.cassandra" % "cassandra-driver-core" % DS_DRIVER_VERSION intransitive(),
-      "org.apache.spark" %% "spark-core" % SPARK_VERSION % "provided" exclude("org.apache.hadoop", "hadoop-core"),
-      "org.apache.spark" %% "spark-streaming" % SPARK_VERSION % "provided",
-      "org.apache.hadoop" % "hadoop-core" % "1.0.4" % "provided",
-      "com.github.nscala-time" %% "nscala-time" % "1.0.0",
-      "org.scalatest" %% "scalatest" % "1.9.1" % "test"
-    )
-
-
-    val pom = {
+  lazy val pom = {
       <scm>
         <url>git@github.com:tuplejump/calliope.git</url>
         <connection>scm:git:git@github.com:tuplejump/calliope.git</connection>
@@ -44,7 +30,21 @@ CalliopeBuild extends Build {
             <url>https://twitter.com/milliondreams</url>
           </developer>
         </developers>
-    }
+  }
+
+  lazy val calliope = {
+    val dependencies = Seq(
+      "org.apache.cassandra" % "cassandra-all" % CAS_VERSION % "provided" intransitive(),
+      "org.apache.cassandra" % "cassandra-thrift" % CAS_VERSION % "provided" intransitive(),
+      "net.jpountz.lz4" % "lz4" % "1.2.0",
+      "org.apache.thrift" % "libthrift" % THRIFT_VERSION exclude("org.slf4j", "slf4j-api") exclude("javax.servlet", "servlet-api"),
+      "com.datastax.cassandra" % "cassandra-driver-core" % DS_DRIVER_VERSION intransitive(),
+      "org.apache.spark" %% "spark-core" % SPARK_VERSION % "provided" exclude("org.apache.hadoop", "hadoop-core"),
+      "org.apache.spark" %% "spark-streaming" % SPARK_VERSION % "provided",
+      "org.apache.hadoop" % "hadoop-core" % "1.0.4" % "provided",
+      "com.github.nscala-time" %% "nscala-time" % "1.0.0",
+      "org.scalatest" %% "scalatest" % "1.9.1" % "test"
+    )
 
     val calliopeSettings = Seq(
       name := "calliope",
@@ -55,7 +55,7 @@ CalliopeBuild extends Build {
 
       scalaVersion := SCALA_VERSION,
 
-      crossScalaVersions := Seq("2.10.3"),
+      crossScalaVersions := Seq("2.10.4"),
 
       scalacOptions := "-deprecation" :: "-unchecked" :: "-feature" :: Nil,
 
@@ -117,8 +117,42 @@ CalliopeBuild extends Build {
 
       libraryDependencies <+= (scalaVersion)("org.scala-lang" % "scala-reflect" % _),
 
-      scalacOptions := "-Ymacro-debug-lite" :: "-deprecation" :: "-unchecked" :: "-feature" :: Nil
+      scalacOptions := "-Ymacro-debug-lite" :: "-deprecation" :: "-unchecked" :: "-feature" :: Nil,
+
+      organization := "com.tuplejump",
+
+      scalacOptions := "-deprecation" :: "-unchecked" :: "-feature" :: Nil,
+
+      parallelExecution in Test := false,
+
+      pomExtra := pom,
+
+      publishArtifact in Test := false,
+
+      pomIncludeRepository := {
+        _ => false
+      },
+
+      publishMavenStyle := true,
+
+      retrieveManaged := true,
+
+      publishTo <<= version {
+        (v: String) =>
+          val nexus = "https://oss.sonatype.org/"
+          if (v.trim.endsWith("SNAPSHOT"))
+            Some("snapshots" at nexus + "content/repositories/snapshots")
+          else
+            Some("releases" at nexus + "service/local/staging/deploy/maven2")
+      },
+
+      licenses := Seq("Apache License, Version 2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
+
+      homepage := Some(url("https://tuplejump.github.io/calliope")),
+
+      organizationName := "Tuplejump, Inc.",
+
+      organizationHomepage := Some(url("http://www.tuplejump.com"))
     )
   )
-
 }

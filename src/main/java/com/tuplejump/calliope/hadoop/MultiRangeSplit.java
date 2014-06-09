@@ -1,8 +1,6 @@
 package com.tuplejump.calliope.hadoop;
 
 
-import org.apache.hadoop.io.ArrayWritable;
-import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.slf4j.Logger;
@@ -12,36 +10,57 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
 
 public class MultiRangeSplit extends InputSplit implements Writable, org.apache.hadoop.mapred.InputSplit, Serializable {
 
     private static final Logger logger = LoggerFactory.getLogger(MultiRangeSplit.class);
 
-    private LongWritable length;
-    private ArrayWritable tokenRanges;
+    private long totalLength;
+    private int tokensInRange;
+    private String[] tokenStarts;
+    private String[] tokenEnds;
+    private long[] tokenLengths;
     private String[] dataNodes;
 
+    public MultiRangeSplit() {
+    }
 
-    public MultiRangeSplit(TokenRange[] tokenRanges, long length, String[] dataNodes) {
-        this.tokenRanges = new ArrayWritable(TokenRange.class, tokenRanges);
-        this.length = new LongWritable(length);
+    public MultiRangeSplit(long totalLength, int tokensInRange, String[] tokenStarts, String[] tokenEnds, long[] tokenLengths, String[] dataNodes) {
+        this.totalLength = totalLength;
+        this.tokensInRange = tokensInRange;
+        this.tokenStarts = tokenStarts;
+        this.tokenEnds = tokenEnds;
+        this.tokenLengths = tokenLengths;
         this.dataNodes = dataNodes;
     }
 
-    public List<TokenRange> getTokenRanges() {
-        Writable[] w = this.tokenRanges.get();
-        List<TokenRange> tokenRangeList = new ArrayList<>();
-        for (Writable tr : w) {
-            tokenRangeList.add((TokenRange) tr);
+    public MultiRangeSplit(TokenRangeHolder[] tokenRanges, long length, String[] dataNodes) {
+        tokensInRange = tokenRanges.length;
+
+        tokenStarts = new String[tokensInRange];
+        tokenEnds = new String[tokensInRange];
+        tokenLengths = new long[tokensInRange];
+
+        for (int i = 0; i < tokensInRange; i++) {
+            tokenStarts[i] = tokenRanges[i].getStartToken();
+            tokenEnds[i] = tokenRanges[i].getEndToken();
+            tokenLengths[i] = tokenRanges[i].getLength();
         }
-        return tokenRangeList;
+        totalLength += length;
+        this.dataNodes = dataNodes;
+    }
+
+    public TokenRangeHolder[] getTokenRanges() {
+        TokenRangeHolder[] trs = new TokenRangeHolder[tokensInRange];
+        for (int i = 0; i < tokensInRange; i++) {
+            trs[i] = new TokenRangeHolder(tokenStarts[i], tokenEnds[i], tokenLengths[i]);
+        }
+        return trs;
     }
 
     @Override
     public long getLength() {
-        return length.get();
+        return totalLength;
     }
 
     @Override
@@ -52,8 +71,20 @@ public class MultiRangeSplit extends InputSplit implements Writable, org.apache.
     @Override
     public void write(DataOutput out) throws IOException {
         try {
-            length.write(out);
-            tokenRanges.write(out);
+            out.writeLong(totalLength);
+            out.writeInt(tokensInRange);
+            for (String tokenStart : tokenStarts) {
+                out.writeUTF(tokenStart);
+            }
+
+            for (String tokenEnd : tokenEnds) {
+                out.writeUTF(tokenEnd);
+            }
+
+            for (long tokenLen : tokenLengths) {
+                out.writeLong(tokenLen);
+            }
+
             out.writeInt(dataNodes.length);
             for (String node : dataNodes) {
                 out.writeUTF(node);
@@ -67,80 +98,35 @@ public class MultiRangeSplit extends InputSplit implements Writable, org.apache.
     @Override
     public void readFields(DataInput in) throws IOException {
         try {
-            length.readFields(in);
-            tokenRanges.readFields(in);
+            this.totalLength = in.readLong();
+            this.tokensInRange = in.readInt();
+
+            this.tokenStarts = new String[tokensInRange];
+
+            for (int i = 0; i < tokensInRange; i++) {
+                tokenStarts[i] = in.readUTF();
+            }
+
+            this.tokenEnds = new String[tokensInRange];
+            for (int i = 0; i < tokensInRange; i++) {
+                tokenEnds[i] = in.readUTF();
+            }
+
+            this.tokenLengths = new long[tokensInRange];
+            for (int i = 0; i < tokensInRange; i++) {
+                tokenLengths[i] = in.readLong();
+            }
+
             int numOfEndpoints = in.readInt();
             dataNodes = new String[numOfEndpoints];
             for (int i = 0; i < numOfEndpoints; i++) {
                 dataNodes[i] = in.readUTF();
             }
+
         } catch (IOException ex) {
             logger.error("Error in reading out split");
             throw ex;
         }
 
-    }
-
-    public static class TokenRange implements Writable, Serializable {
-        private String startToken;
-        private String endToken;
-        private long length;
-
-        public TokenRange(String startToken, String endToken, long length) {
-            this.startToken = startToken;
-            this.endToken = endToken;
-            this.length = length;
-        }
-
-        public String getStartToken() {
-            return startToken;
-        }
-
-        public void setStartToken(String startToken) {
-            this.startToken = startToken;
-        }
-
-        public String getEndToken() {
-            return endToken;
-        }
-
-        public void setEndToken(String endToken) {
-            this.endToken = endToken;
-        }
-
-        public long getLength() {
-            return length;
-        }
-
-        public void setLength(long length) {
-            this.length = length;
-        }
-
-        @Override
-        public void write(DataOutput dataOutput) throws IOException {
-            try {
-                dataOutput.writeUTF(startToken);
-                dataOutput.writeUTF(endToken);
-                dataOutput.writeLong(length);
-            } catch (IOException ex) {
-                logger.error("Error in writing out split's token range");
-                throw ex;
-            }
-
-
-        }
-
-        @Override
-        public void readFields(DataInput dataInput) throws IOException {
-            try {
-                this.startToken = dataInput.readUTF();
-                this.endToken = dataInput.readUTF();
-                this.length = dataInput.readLong();
-            } catch (IOException ex) {
-                logger.error("Error in reading out split's token range");
-                throw ex;
-            }
-
-        }
     }
 }

@@ -18,10 +18,7 @@
 package com.tuplejump.calliope.hadoop.cql3;
 
 import com.datastax.driver.core.Row;
-import com.tuplejump.calliope.hadoop.AbstractColumnFamilyInputFormat;
-import com.tuplejump.calliope.hadoop.ColumnFamilySplit;
-import com.tuplejump.calliope.hadoop.HadoopCompat;
-import com.tuplejump.calliope.hadoop.MultiRangeSplit;
+import com.tuplejump.calliope.hadoop.*;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.RecordReader;
@@ -98,25 +95,25 @@ public class CqlInputFormat extends AbstractColumnFamilyInputFormat<Long, Row> {
                 String firstLocation = cfs.getLocations()[0];
                 if (tokenGroups.containsKey(firstLocation)) {
                     TokenRangesWithLocations trs = tokenGroups.get(firstLocation);
-                    trs.tokenRanges.add(new MultiRangeSplit.TokenRange(cfs.getStartToken(), cfs.getEndToken(), cfs.getLength()));
+                    trs.tokenRanges.add(new TokenRangeHolder(cfs.getStartToken(), cfs.getEndToken(), cfs.getLength()));
                     tokenGroups.put(firstLocation, trs);
                 } else {
                     TokenRangesWithLocations trs = new TokenRangesWithLocations();
                     trs.locations = cfs.getLocations();
                     trs.tokenRanges = new ArrayList<>();
-                    trs.tokenRanges.add(new MultiRangeSplit.TokenRange(cfs.getStartToken(), cfs.getEndToken(), cfs.getLength()));
+                    trs.tokenRanges.add(new TokenRangeHolder(cfs.getStartToken(), cfs.getEndToken(), cfs.getLength()));
                     tokenGroups.put(firstLocation, trs);
                 }
             }
 
             for (Map.Entry<String, TokenRangesWithLocations> group : tokenGroups.entrySet()) {
                 int vnodesAdded = 0;
-                List<MultiRangeSplit.TokenRange> tranges = group.getValue().tokenRanges;
+                List<TokenRangeHolder> tranges = group.getValue().tokenRanges;
                 int remaining = tranges.size();
                 String[] endpoints = group.getValue().locations;
 
                 while (remaining > 0) {
-                    List<MultiRangeSplit.TokenRange> tokens;
+                    List<TokenRangeHolder> tokens;
                     if (remaining >= rangesPerSplit) {
                         tokens = tranges.subList(vnodesAdded, vnodesAdded + rangesPerSplit);
                     } else {
@@ -135,12 +132,12 @@ public class CqlInputFormat extends AbstractColumnFamilyInputFormat<Long, Row> {
         }
     }
 
-    private MultiRangeSplit tokenRangesToMultiRangeSplit(String[] endpoints, List<MultiRangeSplit.TokenRange> tokens) {
+    private MultiRangeSplit tokenRangesToMultiRangeSplit(String[] endpoints, List<TokenRangeHolder> tokens) {
         long multiRangeLength = 0;
-        for (MultiRangeSplit.TokenRange t : tokens) {
+        for (TokenRangeHolder t : tokens) {
             multiRangeLength += t.getLength();
         }
-        MultiRangeSplit.TokenRange[] tokenArray = new MultiRangeSplit.TokenRange[tokens.size()];
+        TokenRangeHolder[] tokenArray = new TokenRangeHolder[tokens.size()];
         tokens.toArray(tokenArray);
         return new MultiRangeSplit(tokenArray, multiRangeLength, endpoints);
     }
@@ -156,7 +153,7 @@ public class CqlInputFormat extends AbstractColumnFamilyInputFormat<Long, Row> {
     }
 
     private class TokenRangesWithLocations {
-        List<MultiRangeSplit.TokenRange> tokenRanges;
+        List<TokenRangeHolder> tokenRanges;
         String[] locations;
     }
 }

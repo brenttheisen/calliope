@@ -24,6 +24,7 @@ import com.google.common.collect.Maps;
 import com.tuplejump.calliope.hadoop.ColumnFamilySplit;
 import com.tuplejump.calliope.hadoop.ConfigHelper;
 import com.tuplejump.calliope.hadoop.MultiRangeSplit;
+import com.tuplejump.calliope.hadoop.TokenRangeHolder;
 import org.apache.cassandra.db.marshal.AbstractType;
 import org.apache.cassandra.db.marshal.BytesType;
 import org.apache.cassandra.dht.IPartitioner;
@@ -338,7 +339,8 @@ public class CqlRecordReader extends RecordReader<Long, Row>
     private class MultiRangeRowIterator extends RowIterator {
         private long keyId = 0L;
         protected Iterator<Row> currentRangeRows;
-        private Stack<MultiRangeSplit.TokenRange> tokenRanges;
+        private TokenRangeHolder[] tokenRanges;
+        private int currentRange;
         private Map<String, ByteBuffer> previousRowKey = new HashMap<String, ByteBuffer>(); // previous CF row key
         AbstractType validatorType;
 
@@ -355,38 +357,49 @@ public class CqlRecordReader extends RecordReader<Long, Row>
             }
 
             logger.info("Created new MultiRangeRowIterator");
-            tokenRanges = new Stack<>();
-            tokenRanges.addAll(cfSplit.getTokenRanges());
+            tokenRanges = cfSplit.getTokenRanges();
+            currentRange = 0;
         }
 
         private Iterator<Row> getNextRange() {
             //if (logger.isDebugEnabled())
-            logger.info(String.format("Processing new token range. %d more to go!", tokenRanges.size()));
+            logger.debug(String.format("Processing new token range. %d more to go!", tokenRanges.length - currentRange));
 
-            MultiRangeSplit.TokenRange range = tokenRanges.pop();
+            TokenRangeHolder range = tokenRanges[currentRange];
             ResultSet rs = session.execute(cqlQuery, validatorType.compose(validatorType.fromString(range.getStartToken())), validatorType.compose(validatorType.fromString(range.getEndToken())));
             for (ColumnMetadata meta : cluster.getMetadata().getKeyspace(keyspace).getTable(cfName).getPartitionKey())
                 partitionBoundColumns.put(meta.getName(), Boolean.TRUE);
+
+            currentRange++;
+
             return rs.iterator();
         }
 
         private Row getNextRow() {
             if (currentRangeRows == null || !currentRangeRows.hasNext()) {
-                if (tokenRanges.empty()) {
-                    return null;
-                } else {
+                do {
                     currentRangeRows = getNextRange();
-                }
+                } while (!currentRangeRows.hasNext() && tokenRanges.length > currentRange);
             }
-            return currentRangeRows.next();
+
+            if (currentRangeRows == null) {
+                return null;
+            } else {
+                return currentRangeRows.next();
+            }
         }
 
         protected Pair<Long, Row> computeNext() {
             Row row = getNextRow();
 
-            if (row == null) return endOfData();
+            if (row == null) {
+                logger.info("Done processing all ranges!");
+                return endOfData();
+            }
 
-            if (logger.isDebugEnabled()) logger.debug("Got new row. Row # %d of total # %d", totalRead, totalRowCount);
+            if (logger.isDebugEnabled()) {
+                logger.info(String.format("Got new row. Row # %d of total # %d", totalRead, totalRowCount));
+            }
 
             Map<String, ByteBuffer> keyColumns = new HashMap<String, ByteBuffer>();
             for (String column : partitionBoundColumns.keySet())
