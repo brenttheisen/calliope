@@ -30,7 +30,7 @@ class NativeCassandraRDDSpec extends FunSpec with BeforeAndAfterAll with ShouldM
       val transformer = NativeRowReader.columnListMapper[NativeEmployee]("deptid", "empid", "first_name", "last_name")
       import transformer._
 
-      val cas = CasBuilder.native.withColumnFamilyAndKeyColumns("cql3_test", "emp_read_test", "deptid").inputSplitSize(64 * 1024 * (256 / 4))
+      val cas = CasBuilder.native.withColumnFamilyAndKeyColumns("cql3_test", "emp_read_test", "deptid")
 
 
       val casrdd = sc.nativeCassandra[NativeEmployee](cas)
@@ -42,7 +42,7 @@ class NativeCassandraRDDSpec extends FunSpec with BeforeAndAfterAll with ShouldM
       val transformer = NativeRowReader.columnListMapper[NativeEmployee]("deptid", "empid", "first_name", "last_name")
       import transformer._
 
-      val cas = CasBuilder.native.withColumnFamilyAndKeyColumns("cql3_test", "emp_read_test", "deptid").inputSplitSize(64 * 1024 * (256 / 4)).mergeRangesInMultiRangeSplit(256)
+      val cas = CasBuilder.native.withColumnFamilyAndKeyColumns("cql3_test", "emp_read_test", "deptid").mergeRangesInMultiRangeSplit(256)
 
 
       val casrdd = sc.nativeCassandra[NativeEmployee](cas)
