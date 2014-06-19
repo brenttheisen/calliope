@@ -4,7 +4,7 @@ import sbt.Keys._
 object
 CalliopeBuild extends Build {
 
-  lazy val VERSION = "0.9.4-EA-SNAPSHOT"
+  lazy val VERSION = "0.9.4-EA-BT-SNAPSHOT"
 
   lazy val CAS_VERSION = "2.0.7"
 
